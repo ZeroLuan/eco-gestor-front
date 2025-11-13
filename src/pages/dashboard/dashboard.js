@@ -3,10 +3,178 @@
  * Controles de interatividade para o dashboard
  */
 
+// Importa serviços (usando Axios)
+import { dashboardService } from '../../services/dashboard/dashboardService.js';
+
+// ===========================
+// CARREGAMENTO DE DADOS DO BACKEND
+// ===========================
+
+/**
+ * Carrega todos os dados do dashboard do backend
+ */
+async function carregarDadosDashboard() {
+    try {
+        console.log('📊 Carregando dados do dashboard...');
+        
+        // Busca dados em paralelo do backend (com Axios!)
+        const [estatisticas, atividades, alertas] = await Promise.all([
+            dashboardService.getStatistics().catch(err => {
+                console.error('Erro ao carregar estatísticas:', err.message);
+                return null;
+            }),
+            dashboardService.getAtividadesRecentes(4).catch(err => {
+                console.error('Erro ao carregar atividades:', err.message);
+                return [];
+            }),
+            dashboardService.getAlertas().catch(err => {
+                console.error('Erro ao carregar alertas:', err.message);
+                return [];
+            })
+        ]);
+
+        // Atualiza a interface com os dados recebidos
+        if (estatisticas) {
+            atualizarEstatisticas(estatisticas);
+        }
+        
+        if (atividades && atividades.length > 0) {
+            atualizarAtividades(atividades);
+        }
+        
+        if (alertas && alertas.length > 0) {
+            atualizarAlertas(alertas);
+        }
+
+        console.log('✅ Dashboard carregado com sucesso!');
+    } catch (error) {
+        console.error('❌ Erro ao carregar dashboard:', error.message);
+    }
+}
+
+/**
+ * Atualiza cards de estatísticas com dados do backend
+ */
+function atualizarEstatisticas(dados) {
+    if (dados.residuosColetados) {
+        const card = document.querySelector('.row.g-3.mb-4 .col-12:nth-child(1) h3');
+        if (card) {
+            card.textContent = `${dados.residuosColetados.valor} ${dados.residuosColetados.unidade || 'ton'}`;
+        }
+    }
+
+    if (dados.pontosColeta) {
+        const card = document.querySelector('.row.g-3.mb-4 .col-12:nth-child(2) h3');
+        if (card) {
+            card.textContent = dados.pontosColeta.valor;
+        }
+    }
+
+    if (dados.licencasAtivas) {
+        const card = document.querySelector('.row.g-3.mb-4 .col-12:nth-child(3) h3');
+        if (card) {
+            card.textContent = dados.licencasAtivas.valor;
+        }
+    }
+
+    if (dados.denunciasPendentes) {
+        const card = document.querySelector('.row.g-3.mb-4 .col-12:nth-child(4) h3');
+        if (card) {
+            card.textContent = dados.denunciasPendentes.valor;
+        }
+    }
+}
+
+/**
+ * Atualiza lista de atividades recentes
+ */
+function atualizarAtividades(atividades) {
+    const lista = document.querySelector('.list-group');
+    if (!lista) return;
+
+    lista.innerHTML = atividades.map(atividade => `
+        <li class="list-group-item d-flex align-items-center">
+            <i class="bi ${getIconeAtividade(atividade.tipo)} me-3"></i>
+            <div>
+                <p class="mb-0 fw-semibold">${atividade.titulo}</p>
+                <small class="text-muted">${atividade.descricao} - ${formatarTempo(atividade.data)}</small>
+            </div>
+        </li>
+    `).join('');
+}
+
+/**
+ * Atualiza alertas do sistema
+ */
+function atualizarAlertas(alertas) {
+    const container = document.querySelector('.col-12.col-lg-4:last-child .card');
+    if (!container) return;
+
+    const alertasHTML = alertas.map(alerta => `
+        <div class="alert alert-${alerta.tipo} d-flex align-items-center" role="alert">
+            <i class="bi ${getIconeAlerta(alerta.tipo)} me-2"></i>
+            <small>${alerta.mensagem}</small>
+        </div>
+    `).join('');
+
+    container.innerHTML = `
+        <div class="p-4">
+            <h5 class="fw-bold mb-3">Alertas do Sistema</h5>
+            ${alertasHTML}
+        </div>
+    `;
+}
+
+/**
+ * Retorna ícone baseado no tipo de atividade
+ */
+function getIconeAtividade(tipo) {
+    const icones = {
+        'licenca': 'bi-check-circle-fill text-success',
+        'ponto': 'bi-geo-alt-fill text-primary',
+        'denuncia': 'bi-exclamation-triangle-fill text-warning',
+        'coleta': 'bi-recycle text-info'
+    };
+    return icones[tipo] || 'bi-info-circle text-secondary';
+}
+
+/**
+ * Retorna ícone baseado no tipo de alerta
+ */
+function getIconeAlerta(tipo) {
+    const icones = {
+        'warning': 'bi-exclamation-triangle-fill',
+        'info': 'bi-info-circle-fill',
+        'danger': 'bi-x-circle-fill',
+        'success': 'bi-check-circle-fill'
+    };
+    return icones[tipo] || 'bi-info-circle-fill';
+}
+
+/**
+ * Formata tempo relativo (ex: "Há 2 horas")
+ */
+function formatarTempo(data) {
+    const agora = new Date();
+    const dataAtividade = new Date(data);
+    const diff = agora - dataAtividade;
+    
+    const minutos = Math.floor(diff / 60000);
+    const horas = Math.floor(diff / 3600000);
+    const dias = Math.floor(diff / 86400000);
+    
+    if (minutos < 60) return `Há ${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+    if (horas < 24) return `Há ${horas} hora${horas !== 1 ? 's' : ''}`;
+    return `Há ${dias} dia${dias !== 1 ? 's' : ''}`;
+}
+
 // ===========================
 // TOGGLE DA SIDEBAR (MOBILE)
 // ===========================
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // Carrega dados do backend usando Axios
+    carregarDadosDashboard();
     
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
