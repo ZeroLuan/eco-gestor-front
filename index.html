@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EcoGestor - Dashboard</title>
-  
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="/src/pages/dashboard/dashboard.css">
 </head>
 <body>
   
@@ -30,37 +27,37 @@
         <h6 class="sidebar-heading">Menu Principal</h6>
         <ul class="nav flex-column">
           <li class="nav-item">
-            <a href="#" class="nav-link active">
+            <a href="#" class="nav-link active" data-page="dashboard">
               <i class="bi bi-speedometer2"></i>
               <span>Dashboard</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-page="pontos-coleta">
               <i class="bi bi-geo-alt-fill"></i>
               <span>Pontos de Coleta</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-page="licencas">
               <i class="bi bi-file-earmark-text"></i>
               <span>Licenças Ambientais</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-page="cooperativas">
               <i class="bi bi-people-fill"></i>
               <span>Cooperativas</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-page="residuos">
               <i class="bi bi-recycle"></i>
               <span>Resíduos</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-page="relatorios">
               <i class="bi bi-file-earmark-pdf"></i>
               <span>Relatorio</span>
             </a>
@@ -125,7 +122,7 @@
     </nav>
 
     <!-- ÁREA DE CONTEÚDO -->
-    <main class="main-content">
+    <main class="main-content" id="app-content">
       
       <!-- Cabeçalho -->
       <div class="content-header mb-4">

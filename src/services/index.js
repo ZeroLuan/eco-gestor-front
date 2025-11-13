@@ -16,4 +16,4 @@ export { pontosColetaService } from './pontosColetaService.js';
 // export { licencasService } from './licencasService.js';
 // export { cooperativasService } from './cooperativasService.js';
 // export { residuosService } from './residuosService.js';
-// export { denunciasService } from './denunciasService.js';
+// export { relatoriosService } from './relatoriosService.js';

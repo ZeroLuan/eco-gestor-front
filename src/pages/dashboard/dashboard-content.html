@@ -1,0 +1,142 @@
+<!-- Cabeçalho -->
+<div class="content-header mb-4">
+  <h2 class="fw-bold mb-1">Dashboard</h2>
+  <p class="text-muted">Visão geral do sistema de gestão ambiental de Irecê</p>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="row g-3 mb-4">
+  
+  <!-- Card 1: Resíduos Coletados -->
+  <div class="col-12 col-sm-6 col-lg-3">
+    <div class="card shadow-sm p-3 h-100">
+      <h6 class="text-muted mb-3">Resíduos Coletados</h6>
+      <h3 class="fw-bold mb-2">679 ton</h3>
+      <p class="text-success small mb-0">
+        <i class="bi bi-arrow-up"></i> Total no mês atual +12%
+      </p>
+    </div>
+  </div>
+
+  <!-- Card 2: Pontos de Coleta -->
+  <div class="col-12 col-sm-6 col-lg-3">
+    <div class="card shadow-sm p-3 h-100">
+      <h6 class="text-muted mb-3">Pontos de Coleta</h6>
+      <h3 class="fw-bold mb-2">42</h3>
+      <p class="text-primary small mb-0">
+        <i class="bi bi-info-circle"></i> Ativos no município
+      </p>
+    </div>
+  </div>
+
+  <!-- Card 3: Licenças Ativas -->
+  <div class="col-12 col-sm-6 col-lg-3">
+    <div class="card shadow-sm p-3 h-100">
+      <h6 class="text-muted mb-3">Licenças Ativas</h6>
+      <h3 class="fw-bold mb-2">158</h3>
+      <p class="text-success small mb-0">
+        <i class="bi bi-check-circle"></i> Válidas e regulares
+      </p>
+    </div>
+  </div>
+
+  <!-- Card 4: Denúncias Pendentes -->
+  <div class="col-12 col-sm-6 col-lg-3">
+    <div class="card shadow-sm p-3 h-100">
+      <h6 class="text-muted mb-3">Denúncias Pendentes</h6>
+      <h3 class="fw-bold mb-2">23</h3>
+      <p class="text-danger small mb-0">
+        <i class="bi bi-exclamation-circle"></i> Aguardando análise
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Cards de Gráficos (Placeholders) -->
+<div class="row g-3">
+  
+  <!-- Card Gráfico 1 -->
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm p-4">
+      <h5 class="fw-bold mb-3">Coleta de Resíduos por Tipo</h5>
+      <div class="chart-placeholder">
+        <i class="bi bi-bar-chart-fill text-muted" style="font-size: 4rem;"></i>
+        <p class="text-muted mt-3">Gráfico de barras - Visualização de dados por categoria</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Gráfico 2 -->
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm p-4">
+      <h5 class="fw-bold mb-3">Distribuição por Tipo</h5>
+      <div class="chart-placeholder">
+        <i class="bi bi-pie-chart-fill text-muted" style="font-size: 4rem;"></i>
+        <p class="text-muted mt-3">Gráfico de pizza - Proporção entre categorias</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Cards Adicionais -->
+<div class="row g-3 mt-3">
+  
+  <!-- Card Lista de Atividades Recentes -->
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm p-4">
+      <h5 class="fw-bold mb-3">Atividades Recentes</h5>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item d-flex align-items-center">
+          <i class="bi bi-check-circle-fill text-success me-3"></i>
+          <div>
+            <p class="mb-0 fw-semibold">Licença ambiental aprovada</p>
+            <small class="text-muted">Empresa ABC Ltda - Há 2 horas</small>
+          </div>
+        </li>
+        <li class="list-group-item d-flex align-items-center">
+          <i class="bi bi-geo-alt-fill text-primary me-3"></i>
+          <div>
+            <p class="mb-0 fw-semibold">Novo ponto de coleta cadastrado</p>
+            <small class="text-muted">Bairro Centro - Há 5 horas</small>
+          </div>
+        </li>
+        <li class="list-group-item d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle-fill text-warning me-3"></i>
+          <div>
+            <p class="mb-0 fw-semibold">Denúncia recebida</p>
+            <small class="text-muted">Descarte irregular - Há 1 dia</small>
+          </div>
+        </li>
+        <li class="list-group-item d-flex align-items-center">
+          <i class="bi bi-recycle text-info me-3"></i>
+          <div>
+            <p class="mb-0 fw-semibold">Coleta seletiva realizada</p>
+            <small class="text-muted">Zona Rural - Há 2 dias</small>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Card Alertas do Sistema -->
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm p-4">
+      <h5 class="fw-bold mb-3">Alertas do Sistema</h5>
+      <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <small>5 licenças vencem este mês</small>
+      </div>
+      <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <small>Relatório mensal disponível</small>
+      </div>
+      <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="bi bi-x-circle-fill me-2"></i>
+        <small>3 pontos com irregularidades</small>
+      </div>
+    </div>
+  </div>
+
+</div>

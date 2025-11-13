@@ -4,7 +4,7 @@
  */
 
 // Importa serviços (usando Axios)
-import { dashboardService } from '../../services/dashboard/dashboardService.js';
+//import { dashboardService } from '../../services/dashboard/dashboardService.js';
 
 // ===========================
 // CARREGAMENTO DE DADOS DO BACKEND
@@ -48,7 +48,7 @@ async function carregarDadosDashboard() {
 
         console.log('✅ Dashboard carregado com sucesso!');
     } catch (error) {
-        console.error('❌ Erro ao carregar dashboard:', error.message);
+        console.error('❌ Erro PROPOSITAL ao carregar dashboard:', error.message);
     }
 }
 
