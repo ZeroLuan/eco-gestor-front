@@ -12,11 +12,16 @@ const dadosExemplo = [
 	{ id: 5, nome: 'Coop Sustentável', cnpj: '33.444.555/0001-22', responsavel: 'Pedro Costa', telefone: '(74) 3641-8765', status: 'Inativa' }
 ];
 
-// Inicializa elementos e eventos quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function() {
+// Inicializa elementos e eventos imediatamente (SPA já carregou o HTML)
+function inicializarCooperativas() {
 	const btnPesquisar = document.getElementById('btnPesquisar');
 	const btnLimpar = document.getElementById('btnLimpar');
 	const btnNovo = document.getElementById('btnNovo');
+
+	if (!btnPesquisar || !btnLimpar || !btnNovo) {
+		console.error('❌ Elementos não encontrados na página de cooperativas');
+		return;
+	}
 
 	if (btnPesquisar) {
 		btnPesquisar.addEventListener('click', function() {
@@ -39,7 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	// Exibe dados iniciais
 	renderizarTabela(dadosExemplo);
-});
+	console.log('✅ Cooperativas inicializadas');
+}
+
+// Executa após um pequeno delay para garantir que o HTML foi injetado
+setTimeout(inicializarCooperativas, 100);
 
 /**
  * Renderiza a tabela com os dados fornecidos

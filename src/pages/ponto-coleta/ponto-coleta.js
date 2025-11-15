@@ -22,11 +22,16 @@ const dadosExemplo = [
 	{ id: 4, nome: 'Coleta Sul', data: '2026-01-08', tipo: 'Municipal' }
 ];
 
-// Inicializa elementos e eventos quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function() {
+// Inicializa elementos e eventos imediatamente (SPA já carregou o HTML)
+function inicializarPontoColeta() {
 	const btnPesquisar = document.getElementById('btnPesquisar');
 	const btnLimpar = document.getElementById('btnLimpar');
 	const btnNovo = document.getElementById('btnNovo');
+
+	if (!btnPesquisar || !btnLimpar || !btnNovo) {
+		console.error('❌ Elementos não encontrados na página');
+		return;
+	}
 
 	btnPesquisar.addEventListener('click', function() {
 		aplicarFiltros();
@@ -44,7 +49,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	// Exibe dados iniciais
 	renderizarTabela(dadosExemplo);
-});
+	console.log('✅ Ponto de Coleta inicializado');
+}
+
+// Executa após um pequeno delay para garantir que o HTML foi injetado
+setTimeout(inicializarPontoColeta, 100);
 
 /**
  * Renderiza a tabela com os dados fornecidos

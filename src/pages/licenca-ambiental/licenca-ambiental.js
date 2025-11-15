@@ -12,11 +12,16 @@ const dadosExemplo = [
 	{ id: 5, empresa: 'Reciclagem Brasil', tipo: 'LI', numero: '005/2024', emissao: '2024-11-01', validade: '2025-11-01', status: 'Pendente' }
 ];
 
-// Inicializa elementos e eventos quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function() {
+// Inicializa elementos e eventos imediatamente (SPA já carregou o HTML)
+function inicializarLicencas() {
 	const btnPesquisar = document.getElementById('btnPesquisar');
 	const btnLimpar = document.getElementById('btnLimpar');
 	const btnNovo = document.getElementById('btnNovo');
+
+	if (!btnPesquisar || !btnLimpar || !btnNovo) {
+		console.error('❌ Elementos não encontrados na página de licenças');
+		return;
+	}
 
 	if (btnPesquisar) {
 		btnPesquisar.addEventListener('click', function() {
@@ -39,7 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	// Exibe dados iniciais
 	renderizarTabela(dadosExemplo);
-});
+	console.log('✅ Licenças Ambientais inicializadas');
+}
+
+// Executa após um pequeno delay para garantir que o HTML foi injetado
+setTimeout(inicializarLicencas, 100);
 
 /**
  * Renderiza a tabela com os dados fornecidos

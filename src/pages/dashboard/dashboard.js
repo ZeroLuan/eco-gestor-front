@@ -171,7 +171,7 @@ function formatarTempo(data) {
 // ===========================
 // TOGGLE DA SIDEBAR (MOBILE)
 // ===========================
-document.addEventListener('DOMContentLoaded', function() {
+function inicializarDashboard() {
     
     // Carrega dados do backend usando Axios
     carregarDadosDashboard();
@@ -241,7 +241,14 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebar.classList.remove('show');
     });
 
-});
+}
+
+// Executa quando o dashboard é carregado (seja inicialmente ou via SPA)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarDashboard);
+} else {
+    inicializarDashboard();
+}
 
 // ===========================
 // ANIMAÇÕES DE SCROLL

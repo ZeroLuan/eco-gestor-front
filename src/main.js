@@ -87,10 +87,11 @@ async function loadPage(pageName) {
         oldScript.remove();
       }
 
-      // Carrega novo script como módulo
+      // Adiciona timestamp para forçar recarregamento do módulo
+      const timestamp = new Date().getTime();
       const script = document.createElement('script');
       script.type = 'module';
-      script.src = route.js;
+      script.src = `${route.js}?t=${timestamp}`;
       script.dataset.page = pageName;
       document.body.appendChild(script);
     }

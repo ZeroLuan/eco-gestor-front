@@ -13,11 +13,16 @@ const dadosExemplo = [
 	{ id: 6, data: '2024-11-05', tipo: 'Eletrônico', quantidade: 45, local: 'Centro', responsavel: 'Lucas Ferreira' }
 ];
 
-// Inicializa elementos e eventos quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function() {
+// Inicializa elementos e eventos imediatamente (SPA já carregou o HTML)
+function inicializarResiduos() {
 	const btnPesquisar = document.getElementById('btnPesquisar');
 	const btnLimpar = document.getElementById('btnLimpar');
 	const btnNovo = document.getElementById('btnNovo');
+
+	if (!btnPesquisar || !btnLimpar || !btnNovo) {
+		console.error('❌ Elementos não encontrados na página de resíduos');
+		return;
+	}
 
 	if (btnPesquisar) {
 		btnPesquisar.addEventListener('click', function() {
@@ -40,7 +45,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	// Exibe dados iniciais
 	renderizarTabela(dadosExemplo);
-});
+	console.log('✅ Resíduos inicializados');
+}
+
+// Executa após um pequeno delay para garantir que o HTML foi injetado
+setTimeout(inicializarResiduos, 100);
 
 /**
  * Renderiza a tabela com os dados fornecidos
