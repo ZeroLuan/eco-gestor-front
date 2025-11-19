@@ -1,5 +1,7 @@
 // Corrige o caminho do service para refletir a estrutura atual (pasta: pontosColeta)
 import { pontosColetaService } from '../../services/pontosColeta/pontosColetaService.js';
+import { abrirModalCadastro, salvarPontoColeta } from './cadastra-ponto-coleta/cadastra-ponto-coleta.js';
+import { EnumUtils } from '../../utils/constants.js';
 
 // ===========================
 // CARREGAMENTO DE DADOS DO BACKEND
@@ -16,10 +18,51 @@ import { pontosColetaService } from '../../services/pontosColeta/pontosColetaSer
 
 // Exemplo de dados de teste (serão substituídos pelos dados vindos do backend)
 const dadosExemplo = [
-	{ id: 1, nome: 'Coleta Central', data: '2026-12-12', tipo: 'Municipal' },
-	{ id: 2, nome: 'Ponto Norte', data: '2026-05-20', tipo: 'Privado' },
-	{ id: 3, nome: 'Cooperativa Verde', data: '2025-11-13', tipo: 'Cooperativa' },
-	{ id: 4, nome: 'Coleta Sul', data: '2026-01-08', tipo: 'Municipal' }
+	{ 
+		id: 1, 
+		nome: 'Ecoponto Central', 
+		tipoResiduo: 'MISTO', 
+		endereco: 'Av. Principal, 100 - Centro',
+		ativo: true,
+		materiaisAceitos: [
+			{ id: 1, tipo: 'PLASTICO', nome: 'Plástico' },
+			{ id: 2, tipo: 'PAPEL', nome: 'Papel' },
+			{ id: 3, tipo: 'VIDRO', nome: 'Vidro' }
+		]
+	},
+	{ 
+		id: 2, 
+		nome: 'Coleta Seletiva Norte', 
+		tipoResiduo: 'PLASTICO', 
+		endereco: 'Rua das Flores, 250 - Bairro Norte',
+		ativo: true,
+		materiaisAceitos: [
+			{ id: 1, tipo: 'PLASTICO', nome: 'Plástico' }
+		]
+	},
+	{ 
+		id: 3, 
+		nome: 'Cooperativa Verde', 
+		tipoResiduo: 'MISTO', 
+		endereco: 'Rua Reciclar, 45 - Zona Industrial',
+		ativo: false,
+		materiaisAceitos: [
+			{ id: 1, tipo: 'PLASTICO', nome: 'Plástico' },
+			{ id: 2, tipo: 'PAPEL', nome: 'Papel' },
+			{ id: 4, tipo: 'METAL', nome: 'Metal' },
+			{ id: 6, tipo: 'ELETRONICO', nome: 'Eletrônico' }
+		]
+	},
+	{ 
+		id: 4, 
+		nome: 'Ponto de Coleta Orgânica', 
+		tipoResiduo: 'ORGANICO', 
+		endereco: 'Fazenda Boa Vista - Zona Rural',
+		ativo: true,
+		materiaisAceitos: [
+			{ id: 5, tipo: 'ORGANICO', nome: 'Orgânico' }
+		]
+	}
 ];
 
 // Inicializa elementos e eventos imediatamente (SPA já carregou o HTML)
@@ -43,8 +86,14 @@ function inicializarPontoColeta() {
 	});
 
 	btnNovo.addEventListener('click', function() {
-		// Em produção: abrir modal / rota para criar novo ponto
-		alert('Implementar criação de novo ponto de coleta (modal/rota)');
+		abrirModalCadastro(null, (novosDados) => {
+			// Callback após salvar - adiciona aos dados de exemplo e atualiza tabela
+			if (!novosDados.id) {
+				novosDados.id = dadosExemplo.length + 1;
+				dadosExemplo.push(novosDados);
+			}
+			renderizarTabela(dadosExemplo);
+		});
 	});
 
 	// Exibe dados iniciais
@@ -64,17 +113,28 @@ function renderizarTabela(dados) {
 	tbody.innerHTML = '';
 
 	if (!dados || dados.length === 0) {
-		tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum registro encontrado</td></tr>';
+		tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum registro encontrado</td></tr>';
 		totalEl.textContent = 'Total de registros: 0';
 		return;
 	}
 
 	dados.forEach(item => {
+		// Formata a lista de materiais aceitos
+		const materiaisHtml = item.materiaisAceitos && item.materiaisAceitos.length > 0
+			? item.materiaisAceitos.map(material => 
+				`<span class="badge bg-${EnumUtils.getCorTipoResiduo(material.tipo)} me-1">${EnumUtils.formatarTipoResiduo(material.tipo)}</span>`
+			).join('')
+			: '<span class="text-muted">Nenhum</span>';
+
 		const tr = document.createElement('tr');
 		tr.innerHTML = `
 			<td>${item.nome}</td>
-			<td>${formatarDataBR(item.data)}</td>
-			<td>${item.tipo}</td>
+			<td><small>${item.endereco}</small></td>
+			<td><span class="badge bg-primary">${EnumUtils.formatarTipoResiduo(item.tipoResiduo)}</span></td>
+			<td>${materiaisHtml}</td>
+			<td class="text-center">
+				<input type="checkbox" class="form-check-input" ${item.ativo ? 'checked' : ''} disabled readonly>
+			</td>
 			<td>
 				<button class="btn btn-outline-secondary btn-sm" title="Mais ações">
 					<i class="bi bi-three-dots-vertical"></i>
@@ -88,18 +148,18 @@ function renderizarTabela(dados) {
 }
 
 /**
- * Aplicar filtro simples com base nos campos Nome, Tipo e Data
+ * Aplicar filtro simples com base nos campos Nome, Tipo de Resíduo e Endereço
  */
 function aplicarFiltros() {
 	const nome = document.getElementById('filterNome').value.trim().toLowerCase();
-	const tipo = document.getElementById('filterTipo').value;
-	const data = document.getElementById('filterData').value; // Formato ISO yyyy-mm-dd
+	const tipoResiduo = document.getElementById('filterTipoResiduo').value;
+	const endereco = document.getElementById('filterEndereco').value.trim().toLowerCase();
 
 	const filtrados = dadosExemplo.filter(item => {
 		const matchNome = nome ? item.nome.toLowerCase().includes(nome) : true;
-		const matchTipo = tipo ? (item.tipo === tipo) : true;
-		const matchData = data ? (item.data === data) : true;
-		return matchNome && matchTipo && matchData;
+		const matchTipo = tipoResiduo ? (item.tipoResiduo === tipoResiduo) : true;
+		const matchEndereco = endereco ? item.endereco.toLowerCase().includes(endereco) : true;
+		return matchNome && matchTipo && matchEndereco;
 	});
 
 	renderizarTabela(filtrados);
@@ -110,19 +170,21 @@ function aplicarFiltros() {
  */
 function limparFiltros() {
 	document.getElementById('filterNome').value = '';
-	document.getElementById('filterTipo').value = '';
-	document.getElementById('filterData').value = '';
+	document.getElementById('filterTipoResiduo').value = '';
+	document.getElementById('filterEndereco').value = '';
 }
 
 /**
- * Formata data YYYY-MM-DD para DD/MM/YYYY (visual)
+ * Formata o tipo de resíduo do enum para texto legível
  */
-function formatarDataBR(isoDate) {
-	if (!isoDate) return '';
-	const d = new Date(isoDate);
-	const day = String(d.getDate()).padStart(2, '0');
-	const month = String(d.getMonth() + 1).padStart(2, '0');
-	const year = d.getFullYear();
-	return `${day}/${month}/${year}`;
+function formatarTipoResiduo(tipo) {
+	return EnumUtils.formatarTipoResiduo(tipo);
+}
+
+/**
+ * Retorna a cor do badge baseado no tipo de resíduo
+ */
+function getCorTipo(tipo) {
+	return EnumUtils.getCorTipoResiduo(tipo);
 }
 

@@ -18,17 +18,21 @@
 					<input type="text" id="filterNome" class="form-control" placeholder="Digite aqui...">
 				</div>
 				<div class="col-md-4">
-					<label class="form-label small">Local</label>
-					<select id="filterTipo" class="form-select">
+					<label class="form-label small">Tipo de Resíduo</label>
+					<select id="filterTipoResiduo" class="form-select">
 						<option value="" selected>Selecione...</option>
-						<option value="Municipal">Municipal</option>
-						<option value="Privado">Privado</option>
-						<option value="Cooperativa">Cooperativa</option>
+						<option value="PLASTICO">Plástico</option>
+						<option value="PAPEL">Papel</option>
+						<option value="VIDRO">Vidro</option>
+						<option value="METAL">Metal</option>
+						<option value="ORGANICO">Orgânico</option>
+						<option value="ELETRONICO">Eletrônico</option>
+						<option value="MISTO">Misto</option>
 					</select>
 				</div>
 				<div class="col-md-4">
-					<label class="form-label small">Data</label>
-					<input type="date" id="filterData" class="form-control">
+					<label class="form-label small">Endereço</label>
+					<input type="text" id="filterEndereco" class="form-control" placeholder="Buscar por endereço...">
 				</div>
 			</div>
 
@@ -60,8 +64,10 @@
 					<thead>
 						<tr>
 							<th scope="col">Nome</th>
-							<th scope="col">Data</th>
-							<th scope="col">Tipo</th>
+							<th scope="col">Endereço</th>
+							<th scope="col">Tipo de Resíduo</th>
+							<th scope="col">Materiais Aceitos</th>
+							<th scope="col">Ponto Ativo</th>
 							<th scope="col">Ações</th>
 						</tr>
 					</thead>

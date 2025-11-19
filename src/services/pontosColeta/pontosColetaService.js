@@ -1,96 +1,144 @@
 /**
  * Pontos de Coleta Service com Axios
- * 
+ *
  * Serviço para gerenciar pontos de coleta
  */
 
 import { apiClient } from '../api.js';
+import {
+    PontoColetaRequest,
+    PontoColetaResponse,
+    PontoColetaFiltro,
+    PaginacaoResponse
+} from './pontoColetaTypes.js';
 
 class PontosColetaService {
-  
+
     /**
-     * Lista todos os pontos de coleta
-     * @param {Object} params - Parâmetros de paginação e filtros
-     * @returns {Promise<Object>} Lista de pontos de coleta
+     * Lista todos os pontos de coleta com paginação e filtros
+     * @param {PontoColetaFiltro} filtro - Filtros e paginação
+     * @returns {Promise<PaginacaoResponse>} Lista paginada de pontos de coleta
      */
-    async listarTodos(params = {}) {
-      try {
-        return await apiClient.get('/pontos-coleta', params);
-      } catch (error) {
-        console.error('Erro ao listar pontos de coleta:', error.message);
-        throw error;
-      }
+    async listarTodos(filtro = new PontoColetaFiltro()) {
+        try {
+            const queryString = filtro.toQueryString();
+            const url = `/ponto-coleta${queryString ? `?${queryString}` : ''}`;
+
+            const response = await apiClient.get(url);
+            return new PaginacaoResponse(response.data);
+        } catch (error) {
+            console.error('Erro ao listar pontos de coleta:', error.message);
+            throw error;
+        }
     }
 
     /**
      * Busca um ponto de coleta por ID
      * @param {number} id - ID do ponto de coleta
-     * @returns {Promise<Object>} Dados do ponto de coleta
+     * @returns {Promise<PontoColetaResponse>} Dados do ponto de coleta
      */
     async buscarPorId(id) {
-      try {
-        return await apiClient.get(`/pontos-coleta/${id}`);
-      } catch (error) {
-        console.error('Erro ao buscar ponto de coleta:', error.message);
-        throw error;
-      }
+        try {
+            const response = await apiClient.get(`/ponto-coleta/${id}`);
+            return PontoColetaResponse.fromAPI(response.data);
+        } catch (error) {
+            console.error('Erro ao buscar ponto de coleta:', error.message);
+            throw error;
+        }
     }
 
-  /**
-   * Cria um novo ponto de coleta
-   * @param {Object} dados - Dados do ponto de coleta
-   * @returns {Promise<Object>} Ponto de coleta criado
-   */
-  async criar(dados) {
-    try {
-      return await apiClient.post('/pontos-coleta', dados);
-    } catch (error) {
-      console.error('Erro ao criar ponto de coleta:', error.message);
-      throw error;
-    }
-  }
+    /**
+     * Cria um novo ponto de coleta
+     * @param {PontoColetaRequest|Object} dados - Dados do ponto de coleta
+     * @returns {Promise<PontoColetaResponse>} Ponto de coleta criado
+     */
+    async criar(dados) {
+        try {
+            // Converte para PontoColetaRequest se necessário
+            const request = dados instanceof PontoColetaRequest ? dados : new PontoColetaRequest(dados);
 
-  /**
-   * Atualiza um ponto de coleta
-   * @param {number} id - ID do ponto de coleta
-   * @param {Object} dados - Dados atualizados
-   * @returns {Promise<Object>} Ponto de coleta atualizado
-   */
-  async atualizar(id, dados) {
-    try {
-      return await apiClient.put(`/pontos-coleta/${id}`, dados);
-    } catch (error) {
-      console.error('Erro ao atualizar ponto de coleta:', error.message);
-      throw error;
-    }
-  }
+            // Valida os dados
+            const validacao = request.validar();
+            if (!validacao.isValid) {
+                throw new Error(`Dados inválidos: ${validacao.errors.join(', ')}`);
+            }
 
-  /**
-   * Remove um ponto de coleta
-   * @param {number} id - ID do ponto de coleta
-   * @returns {Promise<void>}
-   */
-  async remover(id) {
-    try {
-      return await apiClient.delete(`/pontos-coleta/${id}`);
-    } catch (error) {
-      console.error('Erro ao remover ponto de coleta:', error.message);
-      throw error;
+            const response = await apiClient.post('/ponto-coleta/criar', request.toJSON());
+            return PontoColetaResponse.fromAPI(response.data);
+        } catch (error) {
+            console.error('Erro ao criar ponto de coleta:', error.message);
+            throw error;
+        }
     }
-  }
 
-  /**
-   * Busca pontos de coleta ativos
-   * @returns {Promise<Array>} Lista de pontos ativos
-   */
-  async buscarAtivos() {
-    try {
-      return await apiClient.get('/pontos-coleta/ativos');
-    } catch (error) {
-      console.error('Erro ao buscar pontos ativos:', error.message);
-      throw error;
+    /**
+     * Atualiza um ponto de coleta
+     * @param {number} id - ID do ponto de coleta
+     * @param {PontoColetaRequest|Object} dados - Dados atualizados
+     * @returns {Promise<PontoColetaResponse>} Ponto de coleta atualizado
+     */
+    async atualizar(id, dados) {
+        try {
+            // Converte para PontoColetaRequest se necessário
+            const request = dados instanceof PontoColetaRequest ? dados : new PontoColetaRequest(dados);
+
+            // Valida os dados
+            const validacao = request.validar();
+            if (!validacao.isValid) {
+                throw new Error(`Dados inválidos: ${validacao.errors.join(', ')}`);
+            }
+
+            const response = await apiClient.put(`/ponto-coleta/${id}`, request.toJSON());
+            return PontoColetaResponse.fromAPI(response.data);
+        } catch (error) {
+            console.error('Erro ao atualizar ponto de coleta:', error.message);
+            throw error;
+        }
     }
-  }
+
+    /**
+     * Remove um ponto de coleta
+     * @param {number} id - ID do ponto de coleta
+     * @returns {Promise<void>}
+     */
+    async remover(id) {
+        try {
+            await apiClient.delete(`/ponto-coleta/${id}`);
+        } catch (error) {
+            console.error('Erro ao remover ponto de coleta:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Busca pontos de coleta ativos
+     * @returns {Promise<Array<PontoColetaResponse>>} Lista de pontos ativos
+     */
+    async buscarAtivos() {
+        try {
+            const response = await apiClient.get('/ponto-coleta/ativos');
+            return response.data.map(item => PontoColetaResponse.fromAPI(item));
+        } catch (error) {
+            console.error('Erro ao buscar pontos ativos:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Ativa/desativa um ponto de coleta
+     * @param {number} id - ID do ponto de coleta
+     * @param {boolean} ativo - Status ativo/inativo
+     * @returns {Promise<PontoColetaResponse>} Ponto de coleta atualizado
+     */
+    async alterarStatus(id, ativo) {
+        try {
+            const response = await apiClient.patch(`/ponto-coleta/${id}/status`, { ativo });
+            return PontoColetaResponse.fromAPI(response.data);
+        } catch (error) {
+            console.error('Erro ao alterar status do ponto de coleta:', error.message);
+            throw error;
+        }
+    }
 }
 
 export const pontosColetaService = new PontosColetaService();

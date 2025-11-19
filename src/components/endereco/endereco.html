@@ -1,0 +1,86 @@
+<!-- ===========================
+     COMPONENTE DE ENDEREÇO
+     ========================== -->
+<div class="endereco-component" id="enderecoComponent">
+	<input type="hidden" id="enderecoId" value="">
+	
+	<div class="d-flex justify-content-between align-items-center mb-3">
+		<h6 class="mb-0">Endereço</h6>
+		<span class="badge bg-success d-none" id="enderecoSalvoIndicador">
+			<i class="bi bi-check-circle me-1"></i>
+			Endereço Salvo
+		</span>
+	</div>
+	
+	<div class="row">
+		<!-- CEP -->
+		<div class="col-md-4 mb-3">
+			<label for="enderecoCep" class="form-label">CEP <span class="text-danger">*</span></label>
+			<div class="input-group">
+				<input type="text" class="form-control" id="enderecoCep" placeholder="00000-000" maxlength="9" required>
+				<button class="btn btn-outline-secondary" type="button" id="btnBuscarCep" title="Buscar CEP">
+					<i class="bi bi-search"></i>
+				</button>
+			</div>
+			<small class="text-muted d-none" id="cepCarregando">
+				<span class="spinner-border spinner-border-sm" role="status"></span>
+				Buscando...
+			</small>
+		</div>
+		
+		<!-- Logradouro -->
+		<div class="col-md-8 mb-3">
+			<label for="enderecoLogradouro" class="form-label">Logradouro <span class="text-danger">*</span></label>
+			<input type="text" class="form-control" id="enderecoLogradouro" placeholder="Rua, Avenida, etc." required>
+		</div>
+	</div>
+	
+	<div class="row">
+		<!-- Número -->
+		<div class="col-md-3 mb-3">
+			<label for="enderecoNumero" class="form-label">Número <span class="text-danger">*</span></label>
+			<input type="text" class="form-control" id="enderecoNumero" placeholder="123" required>
+		</div>
+		
+		<!-- Complemento -->
+		<div class="col-md-5 mb-3">
+			<label for="enderecoComplemento" class="form-label">Complemento</label>
+			<input type="text" class="form-control" id="enderecoComplemento" placeholder="Apto, Bloco, etc.">
+		</div>
+		
+		<!-- Bairro -->
+		<div class="col-md-4 mb-3">
+			<label for="enderecoBairro" class="form-label">Bairro <span class="text-danger">*</span></label>
+			<input type="text" class="form-control" id="enderecoBairro" placeholder="Centro" required>
+		</div>
+	</div>
+	
+	<div class="row">
+		<!-- Cidade -->
+		<div class="col-md-8 mb-3">
+			<label for="enderecoCidade" class="form-label">Cidade <span class="text-danger">*</span></label>
+			<input type="text" class="form-control" id="enderecoCidade" placeholder="São Paulo" required>
+		</div>
+		
+		<!-- Estado -->
+		<div class="col-md-4 mb-3">
+			<label for="enderecoEstado" class="form-label">Estado <span class="text-danger">*</span></label>
+			<select class="form-select" id="enderecoEstado" required>
+				<option value="">Selecione...</option>
+			</select>
+		</div>
+	</div>
+	
+	<!-- Botão Salvar Endereço -->
+	<div class="d-flex justify-content-end mb-3">
+		<button type="button" class="btn btn-success" id="btnSalvarEndereco">
+			<i class="bi bi-save me-1"></i>
+			<span id="textoBtnSalvarEndereco">Salvar Endereço</span>
+		</button>
+	</div>
+	
+	<div class="alert alert-info d-none" id="enderecoAlerta">
+		<i class="bi bi-info-circle me-2"></i>
+		<span id="enderecoAlertaTexto">Salve o endereço antes de continuar.</span>
+	</div>
+</div>
