@@ -40,7 +40,7 @@ class PontosColetaService {
     async buscarPorId(id) {
         try {
             const response = await apiClient.get(`/ponto-coleta/${id}`);
-            return PontoColetaResponse.fromAPI(response.data);
+            return PontoColetaResponse.fromAPI(response);
         } catch (error) {
             console.error('Erro ao buscar ponto de coleta:', error.message);
             throw error;
@@ -64,7 +64,12 @@ class PontosColetaService {
             }
 
             const response = await apiClient.post('/ponto-coleta/criar', request.toJSON());
-            return PontoColetaResponse.fromAPI(response.data);
+            
+            if (!response) {
+                throw new Error('Resposta da API inválida ou vazia');
+            }
+            
+            return PontoColetaResponse.fromAPI(response);
         } catch (error) {
             console.error('Erro ao criar ponto de coleta:', error.message);
             throw error;
@@ -89,7 +94,7 @@ class PontosColetaService {
             }
 
             const response = await apiClient.put(`/ponto-coleta/${id}`, request.toJSON());
-            return PontoColetaResponse.fromAPI(response.data);
+            return PontoColetaResponse.fromAPI(response);
         } catch (error) {
             console.error('Erro ao atualizar ponto de coleta:', error.message);
             throw error;
@@ -117,7 +122,7 @@ class PontosColetaService {
     async buscarAtivos() {
         try {
             const response = await apiClient.get('/ponto-coleta/ativos');
-            return response.data.map(item => PontoColetaResponse.fromAPI(item));
+            return response.map(item => PontoColetaResponse.fromAPI(item));
         } catch (error) {
             console.error('Erro ao buscar pontos ativos:', error.message);
             throw error;
@@ -133,7 +138,7 @@ class PontosColetaService {
     async alterarStatus(id, ativo) {
         try {
             const response = await apiClient.patch(`/ponto-coleta/${id}/status`, { ativo });
-            return PontoColetaResponse.fromAPI(response.data);
+            return PontoColetaResponse.fromAPI(response);
         } catch (error) {
             console.error('Erro ao alterar status do ponto de coleta:', error.message);
             throw error;

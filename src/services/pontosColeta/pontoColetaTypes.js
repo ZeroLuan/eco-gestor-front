@@ -7,7 +7,7 @@
  */
 export class PontoColetaRequest {
     constructor(data = {}) {
-        this.nome = data.nome || '';
+        this.nomePonto = data.nomePonto || '';
         this.tipoResiduo = data.tipoResiduo || '';
         this.enderecoId = data.enderecoId || null;
         this.ativo = data.ativo !== undefined ? data.ativo : true;
@@ -21,7 +21,7 @@ export class PontoColetaRequest {
     validar() {
         const errors = [];
 
-        if (!this.nome?.trim()) {
+        if (!this.nomePonto?.trim()) {
             errors.push('Nome é obrigatório');
         }
 
@@ -44,7 +44,7 @@ export class PontoColetaRequest {
      */
     toJSON() {
         return {
-            nome: this.nome,
+            nomePonto: this.nomePonto,
             tipoResiduo: this.tipoResiduo,
             enderecoId: this.enderecoId,
             ativo: this.ativo,
@@ -60,13 +60,12 @@ export class PontoColetaResponse {
     constructor(data = {}) {
         this.id = data.id || null;
         this.nome = data.nome || '';
-        this.tipoResiduo = data.tipoResiduo || '';
-        this.enderecoId = data.enderecoId || null;
         this.endereco = data.endereco || null; // Objeto EnderecoResponse
-        this.ativo = data.ativo !== undefined ? data.ativo : true;
+        this.tipoResiduo = data.tipoResiduo || '';
         this.materiaisAceitos = data.materiaisAceitos || [];
-        this.dataCriacao = data.dataCriacao || null;
-        this.dataAtualizacao = data.dataAtualizacao || null;
+        this.ativo = data.ativo !== undefined ? data.ativo : true;
+        this.dataInicio = data.dataInicio || null;
+        this.dataFim = data.dataFim || null;
     }
 
     /**
@@ -75,13 +74,15 @@ export class PontoColetaResponse {
      * @returns {PontoColetaResponse}
      */
     static fromAPI(apiData) {
+        if (!apiData) {
+            throw new Error('Resposta da API está vazia ou inválida');
+        }
+        
         return new PontoColetaResponse({
             ...apiData,
-            // Converte materiaisAceitos se necessário
-            materiaisAceitos: apiData.materiaisAceitos?.map(material => ({
-                tipo: material.tipo || material,
-                nome: material.nome || material
-            })) || []
+            nome: apiData.nomePonto || apiData.nome || '',
+            // materiaisAceitos vem como array de strings do backend
+            materiaisAceitos: apiData.materiaisAceitos || []
         });
     }
 

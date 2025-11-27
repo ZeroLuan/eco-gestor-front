@@ -373,6 +373,12 @@ export class EnderecoComponent {
         document.getElementById('enderecoCidade').value = '';
         document.getElementById('enderecoEstado').value = '';
         this.marcarComoNaoSalvo();
+        
+        // Reseta o texto do botão
+        const textoBtn = document.getElementById('textoBtnSalvarEndereco');
+        if (textoBtn) {
+            textoBtn.textContent = 'Salvar Endereço';
+        }
     }
 
     /**
@@ -504,22 +510,7 @@ export class EnderecoComponent {
             indicador.classList.remove('d-none');
         }
 
-        // Desabilita campos para indicar que está salvo
-        const inputs = ['enderecoCep', 'enderecoLogradouro', 'enderecoNumero', 
-                       'enderecoComplemento', 'enderecoBairro', 'enderecoCidade', 'enderecoEstado'];
-        
-        inputs.forEach(inputId => {
-            const input = document.getElementById(inputId);
-            if (input) {
-                input.classList.add('bg-light');
-                input.setAttribute('readonly', 'true');
-            }
-        });
-
-        const btnBuscarCep = document.getElementById('btnBuscarCep');
-        if (btnBuscarCep) {
-            btnBuscarCep.disabled = true;
-        }
+        // Campos permanecem editáveis após salvar
     }
 
     /**
@@ -534,22 +525,7 @@ export class EnderecoComponent {
                 indicador.classList.add('d-none');
             }
 
-            // Habilita campos novamente
-            const inputs = ['enderecoCep', 'enderecoLogradouro', 'enderecoNumero', 
-                           'enderecoComplemento', 'enderecoBairro', 'enderecoCidade', 'enderecoEstado'];
-            
-            inputs.forEach(inputId => {
-                const input = document.getElementById(inputId);
-                if (input) {
-                    input.classList.remove('bg-light');
-                    input.removeAttribute('readonly');
-                }
-            });
-
-            const btnBuscarCep = document.getElementById('btnBuscarCep');
-            if (btnBuscarCep) {
-                btnBuscarCep.disabled = false;
-            }
+            // Campos permanecem editáveis
         }
     }
 

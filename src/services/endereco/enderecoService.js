@@ -85,7 +85,7 @@ class EnderecoService {
                 throw new Error(`Dados inválidos: ${validacao.errors.join(', ')}`);
             }
 
-            const response = await apiClient.put(`/enderecos/${id}`, request.toJSON());
+            const response = await apiClient.put(`/endereco/editar/${id}`, request.toJSON());
             const dadosResposta = this._processarResposta(response);
             return EnderecoResponse.fromAPI(dadosResposta);
         } catch (error) {

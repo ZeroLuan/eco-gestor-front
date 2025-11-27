@@ -283,10 +283,7 @@ function obterMateriaisAceitos() {
 	const materiais = [];
 	const checkboxes = document.querySelectorAll('[id^="mat"]:checked');
 	checkboxes.forEach(checkbox => {
-		materiais.push({
-			tipo: checkbox.value,
-			nome: checkbox.nextElementSibling.textContent
-		});
+		materiais.push(checkbox.value);
 	});
 	return materiais;
 }
@@ -315,7 +312,7 @@ export async function salvarPontoColeta() {
 	// Coleta os dados do formulário
 	const dados = {
 		id: document.getElementById('pontoId').value || null,
-		nome: document.getElementById('pontoNome').value,
+		nomePonto: document.getElementById('pontoNome').value,
 		tipoResiduo: document.getElementById('pontoTipoResiduo').value,
 		ativo: document.getElementById('pontoAtivo').checked,
 		materiaisAceitos: obterMateriaisAceitos(),
@@ -331,9 +328,6 @@ export async function salvarPontoColeta() {
         
         // Fecha o modal
         fecharModal();
-        
-        // Exibe mensagem de sucesso
-        alert(dados.id ? 'Ponto de coleta atualizado com sucesso!' : 'Ponto de coleta cadastrado com sucesso!');
         
         // Executa callback se fornecido (para atualizar a tabela na tela principal)
         if (callbackGlobal && typeof callbackGlobal === 'function') {
