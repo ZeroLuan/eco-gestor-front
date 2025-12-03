@@ -3,6 +3,8 @@
  * Gerenciamento de cooperativas de reciclagem
  */
 
+import { criarBotaoAcoesPadrao, adicionarEventListeners } from '../../components/common/botao-acoes/botao-acoes.js';
+
 // Exemplo de dados de teste
 const dadosExemplo = [
 	{ id: 1, nome: 'Cooperativa Verde', cnpj: '12.345.678/0001-90', responsavel: 'João Silva', telefone: '(74) 3641-1234', status: 'Ativa' },
@@ -77,12 +79,21 @@ function renderizarTabela(dados) {
 			<td>${item.telefone}</td>
 			<td><span class="badge bg-${statusClass}">${item.status}</span></td>
 			<td>
-				<button class="btn btn-outline-secondary btn-sm" title="Mais ações">
-					<i class="bi bi-three-dots-vertical"></i>
-				</button>
+				${criarBotaoAcoesPadrao(item.id)}
 			</td>
 		`;
 		tbody.appendChild(tr);
+	});
+
+	// Adiciona event listeners aos botões de ação
+	adicionarEventListeners(tbody, (action, id) => {
+		if (action === 'editar') {
+			alert(`Editar cooperativa ID: ${id}`);
+		} else if (action === 'excluir') {
+			if (confirm('Tem certeza que deseja excluir esta cooperativa?')) {
+				alert(`Excluir cooperativa ID: ${id}`);
+			}
+		}
 	});
 
 	if (totalEl) totalEl.textContent = `Total de registros: ${dados.length}`;

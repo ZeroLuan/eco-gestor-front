@@ -3,6 +3,8 @@
  * Gerenciamento de licenças ambientais
  */
 
+import { criarBotaoAcoesPadrao, adicionarEventListeners } from '../../components/common/botao-acoes/botao-acoes.js';
+
 // Exemplo de dados de teste
 const dadosExemplo = [
 	{ id: 1, empresa: 'Empresa ABC Ltda', tipo: 'LO', numero: '001/2024', emissao: '2024-01-15', validade: '2027-01-15', status: 'Ativa' },
@@ -78,12 +80,21 @@ function renderizarTabela(dados) {
 			<td>${formatarDataBR(item.validade)}</td>
 			<td><span class="badge bg-${statusClass}">${item.status}</span></td>
 			<td>
-				<button class="btn btn-outline-secondary btn-sm" title="Mais ações">
-					<i class="bi bi-three-dots-vertical"></i>
-				</button>
+				${criarBotaoAcoesPadrao(item.id)}
 			</td>
 		`;
 		tbody.appendChild(tr);
+	});
+
+	// Adiciona event listeners aos botões de ação
+	adicionarEventListeners(tbody, (action, id) => {
+		if (action === 'editar') {
+			alert(`Editar licença ID: ${id}`);
+		} else if (action === 'excluir') {
+			if (confirm('Tem certeza que deseja excluir esta licença?')) {
+				alert(`Excluir licença ID: ${id}`);
+			}
+		}
 	});
 
 	if (totalEl) totalEl.textContent = `Total de registros: ${dados.length}`;

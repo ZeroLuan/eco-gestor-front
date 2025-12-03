@@ -16,16 +16,31 @@ class PontosColetaService {
 
     /**
      * Lista todos os pontos de coleta com paginação e filtros
-     * @param {PontoColetaFiltro} filtro - Filtros e paginação
-     * @returns {Promise<PaginacaoResponse>} Lista paginada de pontos de coleta
+     * @param {Object} params - Parâmetros de paginação (page, size, sort)
+     * @returns {Promise<Object>} Lista paginada de pontos de coleta
      */
-    async listarTodos(filtro = new PontoColetaFiltro()) {
+    async listarTodos(params = {}) {
         try {
-            const queryString = filtro.toQueryString();
-            const url = `/ponto-coleta${queryString ? `?${queryString}` : ''}`;
+            // Define valores padrão para paginação
+            const page = params.page || 0;
+            const size = params.size || 10;
+            const sort = params.sort || 'id,asc';
+
+            // Monta query string no formato Spring Boot
+            const queryParams = new URLSearchParams({
+                page: page.toString(),
+                size: size.toString(),
+                sort: sort
+            });
+
+            const url = `/ponto-coleta/busca/paginada?${queryParams.toString()}`;
+            console.log('🔍 Buscando pontos de coleta:', url);
 
             const response = await apiClient.get(url);
-            return new PaginacaoResponse(response.data);
+            
+            // O Spring Boot retorna um objeto Page com esta estrutura:
+            // { content: [], totalElements, totalPages, number, size, etc }
+            return response;
         } catch (error) {
             console.error('Erro ao listar pontos de coleta:', error.message);
             throw error;
@@ -93,10 +108,18 @@ class PontosColetaService {
                 throw new Error(`Dados inválidos: ${validacao.errors.join(', ')}`);
             }
 
-            const response = await apiClient.put(`/ponto-coleta/${id}`, request.toJSON());
+            console.log('📤 Editando ponto de coleta ID:', id, 'Dados:', request.toJSON());
+
+            const response = await apiClient.put(`/ponto-coleta/editar/${id}`, request.toJSON());
+            
+            if (!response) {
+                console.warn('⚠️ Backend retornou resposta vazia, assumindo sucesso');
+                return { id, ...request.toJSON() };
+            }
+            
             return PontoColetaResponse.fromAPI(response);
         } catch (error) {
-            console.error('Erro ao atualizar ponto de coleta:', error.message);
+            console.error('❌ Erro ao atualizar ponto de coleta:', error.message);
             throw error;
         }
     }
@@ -108,9 +131,11 @@ class PontosColetaService {
      */
     async remover(id) {
         try {
+            console.log('🗑️ Excluindo ponto de coleta ID:', id);
             await apiClient.delete(`/ponto-coleta/${id}`);
+            console.log('✅ Ponto de coleta excluído com sucesso no backend');
         } catch (error) {
-            console.error('Erro ao remover ponto de coleta:', error.message);
+            console.error('❌ Erro ao remover ponto de coleta:', error.message);
             throw error;
         }
     }
