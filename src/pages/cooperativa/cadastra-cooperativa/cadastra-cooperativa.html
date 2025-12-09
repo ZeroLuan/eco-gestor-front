@@ -1,0 +1,124 @@
+<!-- Modal de Cadastro/Edição de Cooperativa -->
+<div
+  class="modal fade"
+  id="modalCadastroCooperativa"
+  tabindex="-1"
+  aria-labelledby="modalCooperativaLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <!-- Cabeçalho -->
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalCooperativaLabel">
+          <i class="bi bi-building me-2"></i>
+          <span id="tituloModalCooperativa">Cadastrar Cooperativa</span>
+        </h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+          aria-label="Fechar"
+        ></button>
+      </div>
+
+      <!-- Corpo -->
+      <div class="modal-body">
+        <form id="formCadastroCooperativa">
+          <input type="hidden" id="cooperativaId" value="" />
+
+          <!-- Nome da Cooperativa -->
+          <div class="mb-3">
+            <label for="cooperativaNome" class="form-label">
+              Nome da Cooperativa <span class="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="cooperativaNome"
+              placeholder="Digite o nome da cooperativa"
+              required
+            />
+          </div>
+
+          <!-- Responsável -->
+          <div class="mb-3">
+            <label for="cooperativaResponsavel" class="form-label">
+              Responsável <span class="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="cooperativaResponsavel"
+              placeholder="Nome do responsável"
+              required
+            />
+          </div>
+
+          <!-- CNPJ -->
+          <div class="mb-3">
+            <label for="cooperativaCnpj" class="form-label">
+              CNPJ <span class="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="cooperativaCnpj"
+              placeholder="00.000.000/0000-00"
+              required
+            />
+          </div>
+
+          <!-- Pontos de Coleta 
+          <div class="mb-3">
+            <label class="form-label">Pontos de Coleta Associados</label>
+            <div class="border rounded p-3 bg-light" id="pontosColetaContainer">
+            
+            </div>
+          </div> -->
+
+          <div class="mb-3">
+            <label for="statusCooperativa" class="form-label">Status</label>
+            <select class="form-select" id="statusCooperativa" required>
+              <option value="">Selecione</option>
+              <option value="ATIVA">Ativa</option>
+              <option value="VENCIDA">Vencida</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="INATIVA">Inativa</option>
+            </select>
+          </div>
+
+          <!-- Data de Início -->
+          <div class="mb-3">
+            <label for="dataInicio" class="form-label">
+              Data de Início <span class="text-danger">*</span>
+            </label>
+            <input
+              type="datetime-local"
+              class="form-control"
+              id="dataInicio"
+              required
+            />
+          </div>
+
+          <!-- Data de Fim -->
+          <div class="mb-3">
+            <label for="dataFim" class="form-label">Data de Encerramento</label>
+            <input type="datetime-local" class="form-control" id="dataFim" />
+          </div>
+        </form>
+      </div>
+
+      <!-- Rodapé -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-1"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-success" id="btnSalvarCooperativa">
+          <i class="bi bi-check-lg me-1"></i>
+          <span id="textoBotaoSalvarCooperativa">Cadastrar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
