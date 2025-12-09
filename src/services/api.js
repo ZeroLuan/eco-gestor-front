@@ -1,18 +1,19 @@
 /**
  * API Client com Axios - Configuração base para comunicação com o backend Java
- * 
+ *
  * Este arquivo contém a configuração central para todas as requisições HTTP
  * ao backend Spring Boot usando Axios
  */
 
-import axios from 'axios';
+import axios from "axios";
 
 // ===========================
 // CONFIGURAÇÃO DA API
 // ===========================
 
 // URL base do seu backend Java (ajuste conforme necessário)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 // Timeout padrão para requisições (em milissegundos)
 const DEFAULT_TIMEOUT = 30000;
@@ -24,8 +25,8 @@ const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: DEFAULT_TIMEOUT,
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
 });
 
@@ -39,18 +40,18 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     // Obtém o token do localStorage
-    const token = localStorage.getItem('auth_token');
-    
+    const token = localStorage.getItem("auth_token");
+
     // Adiciona o token no header se existir
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     console.log(`🚀 ${config.method.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
-    console.error('❌ Erro na requisição:', error);
+    console.error("❌ Erro na requisição:", error);
     return Promise.reject(error);
   }
 );
@@ -65,52 +66,69 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     // Sucesso - retorna apenas os dados
-    console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
+    console.log(
+      `✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${
+        response.status
+      }`
+    );
     return response.data;
   },
   (error) => {
     // Tratamento de erros
     if (error.response) {
       const status = error.response.status;
-      const message = error.response.data?.message || error.response.data?.error || 'Erro na requisição';
-      
+      const message =
+        error.response.data?.message ||
+        error.response.data?.error ||
+        "Erro na requisição";
+
       console.error(`❌ Erro ${status}:`, message);
-      
+
       // Erro 401 - Não autorizado (token inválido/expirado)
       if (status === 401) {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-        window.location.href = '/login';
-        return Promise.reject(new Error('Sessão expirada. Faça login novamente.'));
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_data");
+        window.location.href = "/login";
+        return Promise.reject(
+          new Error("Sessão expirada. Faça login novamente.")
+        );
       }
-      
+
       // Erro 403 - Sem permissão
       if (status === 403) {
-        return Promise.reject(new Error('Você não tem permissão para acessar este recurso.'));
+        return Promise.reject(
+          new Error("Você não tem permissão para acessar este recurso.")
+        );
       }
-      
+
       // Erro 404 - Não encontrado
       if (status === 404) {
-        return Promise.reject(new Error('Recurso não encontrado.'));
+        return Promise.reject(new Error("Recurso não encontrado."));
       }
-      
+
       // Erro 500+ - Erro no servidor
       if (status >= 500) {
-        return Promise.reject(new Error('Erro no servidor. Tente novamente mais tarde.'));
+        return Promise.reject(
+          new Error("Erro no servidor. Tente novamente mais tarde.")
+        );
       }
-      
+
       return Promise.reject(new Error(message));
     }
-    
+
     // Erro de rede ou timeout
-    if (error.code === 'ECONNABORTED') {
-      return Promise.reject(new Error('Requisição expirou. Tente novamente.'));
+    if (error.code === "ECONNABORTED") {
+      return Promise.reject(new Error("Requisição expirou. Tente novamente."));
     }
-    
-    if (error.message === 'Network Error') {
-      return Promise.reject(new Error('Erro de conexão. Verifique sua internet ou se o backend está rodando.'));
+
+    if (error.message === "Network Error") {
+      return Promise.reject(
+        new Error(
+          "Erro de conexão. Verifique sua internet ou se o backend está rodando."
+        )
+      );
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -123,13 +141,12 @@ axiosInstance.interceptors.response.use(
  * Classe principal para gerenciar requisições HTTP
  */
 class ApiClient {
-  
   /**
    * Obtém o token de autenticação do localStorage
    * @returns {string|null} Token JWT
    */
   getAuthToken() {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem("auth_token");
   }
 
   /**
@@ -137,15 +154,15 @@ class ApiClient {
    * @param {string} token - Token JWT
    */
   setAuthToken(token) {
-    localStorage.setItem('auth_token', token);
+    localStorage.setItem("auth_token", token);
   }
 
   /**
    * Remove o token de autenticação
    */
   clearAuthToken() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_data");
   }
 
   /**
