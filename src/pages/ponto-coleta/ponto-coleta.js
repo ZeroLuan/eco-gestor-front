@@ -46,7 +46,7 @@ async function inicializarPontoColeta() {
 
 	btnLimpar.addEventListener('click', function() {
 		limparFiltros();
-		paginacao.voltarParaPrimeiraPagina();
+		// Apenas limpa os campos, não faz requisição ao backend
 	});
 
 	btnNovo.addEventListener('click', function() {
@@ -67,11 +67,33 @@ async function inicializarPontoColeta() {
 async function carregarPontosColeta(pagina = 0) {
 	try {
 		console.log(`🔄 Carregando pontos de coleta - Página ${pagina + 1}...`);
-		const response = await pontosColetaService.listarTodos({
-			page: pagina,
-			size: paginacao.getTamanhoPagina(),
-			sort: 'id,desc'
-		});
+		
+		// Captura os filtros ativos
+		const filtros = obterFiltrosAtivos();
+		const temFiltros = Object.keys(filtros).length > 0;
+		
+		// Se houver filtros, usa buscarComFiltros, senão usa listarTodos
+		let response = temFiltros
+			? await pontosColetaService.buscarComFiltros(filtros, {
+				page: pagina,
+				size: paginacao.getTamanhoPagina(),
+				sort: 'id,desc'
+			})
+			: await pontosColetaService.listarTodos({
+				page: pagina,
+				size: paginacao.getTamanhoPagina(),
+				sort: 'id,desc'
+			});
+		
+		// Se filtrou mas não encontrou nada, busca todos
+		if (temFiltros && (!response || !response.content || response.content.length === 0)) {
+			console.log('⚠️ Filtro não retornou resultados. Buscando todos...');
+			response = await pontosColetaService.listarTodos({
+				page: 0,
+				size: paginacao.getTamanhoPagina(),
+				sort: 'id,desc'
+			});
+		}
 		
 		if (response && response.content) {
 			pontosDados = response.content;
@@ -208,21 +230,51 @@ async function excluirPontoColeta(id, nome) {
 }
 
 /**
+ * Captura os filtros ativos dos campos de input
+ */
+function obterFiltrosAtivos() {
+	const filtros = {};
+	
+	const nome = document.getElementById('filterNome')?.value.trim();
+	const tipoResiduo = document.getElementById('filterTipoResiduo')?.value.trim();
+	const endereco = document.getElementById('filterEndereco')?.value.trim();
+	
+	if (nome) {
+		filtros.nomePonto = nome;
+	}
+	
+	if (tipoResiduo) {
+		filtros.tipoResiduo = tipoResiduo;
+	}
+	
+	if (endereco) {
+		// Se tiver filtro de endereço, envia como objeto
+		filtros.endereco = {
+			logradouro: endereco
+		};
+	}
+	
+	return filtros;
+}
+
+/**
  * Aplicar filtro simples com base nos campos Nome, Tipo de Resíduo e Endereço
  * Nota: Para filtros mais complexos, seria ideal implementar no backend
  */
 function aplicarFiltros() {
-	// Recarrega a primeira página quando filtrar
-	// TODO: Futuramente, enviar filtros para o backend via query params
+	// Recarrega a primeira página com os filtros ativos
 	paginacao.voltarParaPrimeiraPagina();
 }
 
 /**
  * Limpa filtros e reseta para a lista completa
  */
-function limparFiltros() {
+async function limparFiltros() {
 	document.getElementById('filterNome').value = '';
 	document.getElementById('filterTipoResiduo').value = '';
 	document.getElementById('filterEndereco').value = '';
+	
+	// Recarrega todos os registros sem filtros
+	await carregarPontosColeta(0);
 }
 

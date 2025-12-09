@@ -34,9 +34,8 @@ function inicializarCooperativas() {
   btnPesquisar.addEventListener("click", aplicarFiltros);
 
   // Limpa filtros e mostra todos os registros em memória
-  btnLimpar.addEventListener("click", () => {
-    limparFiltros();
-    renderizarTabela(cooperativas);
+  btnLimpar.addEventListener("click", async () => {
+    await limparFiltros();
   });
 
   // Novo cadastro
@@ -75,7 +74,13 @@ function aplicarFiltros() {
     return matchNome && matchCnpj && matchStatus;
   });
 
-  renderizarTabela(filtrados);
+  // Se não encontrou nada com filtros, mostra todos
+  if (filtrados.length === 0) {
+    console.log('⚠️ Filtro não retornou resultados. Mostrando todos...');
+    renderizarTabela(cooperativas);
+  } else {
+    renderizarTabela(filtrados);
+  }
 function renderizarTabela(dados) {
 	const tbody = document.querySelector('#tabelaCooperativas tbody');
 	const totalEl = document.getElementById('totalRegistros');
@@ -123,7 +128,7 @@ function renderizarTabela(dados) {
 /**
  * Limpa filtros
  */
-function limparFiltros() {
+async function limparFiltros() {
   const filterNome = document.getElementById("filterNome");
   const filterCnpj = document.getElementById("filterCnpj");
   const filterStatus = document.getElementById("filterStatus");
@@ -131,6 +136,9 @@ function limparFiltros() {
   if (filterNome) filterNome.value = "";
   if (filterCnpj) filterCnpj.value = "";
   if (filterStatus) filterStatus.value = "";
+  
+  // Recarrega todos os registros
+  renderizarTabela(cooperativas);
 }
 
 /**

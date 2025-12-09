@@ -73,9 +73,8 @@ function inicializarLicencas() {
   }
 
   if (btnLimpar) {
-    btnLimpar.addEventListener("click", function () {
-      limparFiltros();
-      renderizarTabela(dadosExemplo);
+    btnLimpar.addEventListener("click", async function () {
+      await limparFiltros();
     });
   }
 
@@ -173,13 +172,19 @@ function aplicarFiltros() {
     return matchEmpresa && matchStatus && matchVencimento && matchTipo;
   });
 
-  renderizarTabela(filtrados);
+  // Se não encontrou nada com filtros, mostra todos
+  if (filtrados.length === 0) {
+    console.log('⚠️ Filtro não retornou resultados. Mostrando todos...');
+    renderizarTabela(dadosExemplo);
+  } else {
+    renderizarTabela(filtrados);
+  }
 }
 
 /**
  * Limpa filtros
  */
-function limparFiltros() {
+async function limparFiltros() {
   const filterEmpresa = document.getElementById("filterEmpresa");
   const filterStatus = document.getElementById("filterStatus");
   const filterVencimento = document.getElementById("filterVencimento");
@@ -189,6 +194,9 @@ function limparFiltros() {
   if (filterStatus) filterStatus.value = "";
   if (filterVencimento) filterVencimento.value = "";
   if (filterTipo) filterTipo.value = "";
+  
+  // Recarrega todos os registros
+  renderizarTabela(dadosExemplo);
 }
 
 /**

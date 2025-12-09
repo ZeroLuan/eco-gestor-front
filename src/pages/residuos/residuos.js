@@ -35,9 +35,8 @@ function inicializarResiduos() {
     });
   }
   if (btnLimpar) {
-    btnLimpar.addEventListener("click", function () {
-      limparFiltros();
-      renderizarTabela(dados);
+    btnLimpar.addEventListener("click", async function () {
+      await limparFiltros();
     });
   }
 
@@ -146,13 +145,19 @@ function aplicarFiltros() {
     return matchTipo && matchDataInicio && matchDataFim && matchLocal;
   });
 
-  renderizarTabela(filtrados);
+  // Se não encontrou nada com filtros, mostra todos
+  if (filtrados.length === 0) {
+    console.log('⚠️ Filtro não retornou resultados. Mostrando todos...');
+    renderizarTabela(dados);
+  } else {
+    renderizarTabela(filtrados);
+  }
 }
 
 /**
  * Limpa filtros
  */
-function limparFiltros() {
+async function limparFiltros() {
   const filterTipo = document.getElementById("filterTipo");
   const filterDataInicio = document.getElementById("filterDataInicio");
   const filterDataFim = document.getElementById("filterDataFim");
@@ -162,6 +167,9 @@ function limparFiltros() {
   if (filterDataInicio) filterDataInicio.value = "";
   if (filterDataFim) filterDataFim.value = "";
   if (filterLocal) filterLocal.value = "";
+  
+  // Recarrega todos os registros
+  renderizarTabela(dados);
 }
 
 /**
