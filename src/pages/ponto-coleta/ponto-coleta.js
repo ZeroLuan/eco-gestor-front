@@ -2,71 +2,25 @@
 import { pontosColetaService } from '../../services/pontosColeta/pontosColetaService.js';
 import { abrirModalCadastro, salvarPontoColeta } from './cadastra-ponto-coleta/cadastra-ponto-coleta.js';
 import { EnumUtils } from '../../utils/constants.js';
+import { PaginacaoComponent } from '../../components/paginacao/paginacao.js';
+import { criarBotaoAcoesPadrao, adicionarEventListeners } from '../../components/common/botao-acoes/botao-acoes.js';
 
 // ===========================
 // CARREGAMENTO DE DADOS DO BACKEND
 // ===========================
 
 /**
- * Carrega todos os dados do ponto de coleta do backend
- * - Este arquivo contém lógica mínima para demonstração:
- *   - Renderizar linhas fictícias
- *   - Filtrar por Nome / Tipo / Data
- *   - Limpar filtros
- *   - Simular ações de novo/editar
+ * Carrega todos os dados do ponto de coleta do backend com paginação
  */
 
-// Exemplo de dados de teste (serão substituídos pelos dados vindos do backend)
-const dadosExemplo = [
-	{ 
-		id: 1, 
-		nome: 'Ecoponto Central', 
-		tipoResiduo: 'MISTO', 
-		endereco: 'Av. Principal, 100 - Centro',
-		ativo: true,
-		materiaisAceitos: [
-			{ id: 1, tipo: 'PLASTICO', nome: 'Plástico' },
-			{ id: 2, tipo: 'PAPEL', nome: 'Papel' },
-			{ id: 3, tipo: 'VIDRO', nome: 'Vidro' }
-		]
-	},
-	{ 
-		id: 2, 
-		nome: 'Coleta Seletiva Norte', 
-		tipoResiduo: 'PLASTICO', 
-		endereco: 'Rua das Flores, 250 - Bairro Norte',
-		ativo: true,
-		materiaisAceitos: [
-			{ id: 1, tipo: 'PLASTICO', nome: 'Plástico' }
-		]
-	},
-	{ 
-		id: 3, 
-		nome: 'Cooperativa Verde', 
-		tipoResiduo: 'MISTO', 
-		endereco: 'Rua Reciclar, 45 - Zona Industrial',
-		ativo: false,
-		materiaisAceitos: [
-			{ id: 1, tipo: 'PLASTICO', nome: 'Plástico' },
-			{ id: 2, tipo: 'PAPEL', nome: 'Papel' },
-			{ id: 4, tipo: 'METAL', nome: 'Metal' },
-			{ id: 6, tipo: 'ELETRONICO', nome: 'Eletrônico' }
-		]
-	},
-	{ 
-		id: 4, 
-		nome: 'Ponto de Coleta Orgânica', 
-		tipoResiduo: 'ORGANICO', 
-		endereco: 'Fazenda Boa Vista - Zona Rural',
-		ativo: true,
-		materiaisAceitos: [
-			{ id: 5, tipo: 'ORGANICO', nome: 'Orgânico' }
-		]
-	}
-];
+// Array para armazenar os dados carregados do backend
+let pontosDados = [];
+
+// Componente de paginação reutilizável
+let paginacao = null;
 
 // Inicializa elementos e eventos imediatamente (SPA já carregou o HTML)
-function inicializarPontoColeta() {
+async function inicializarPontoColeta() {
 	const btnPesquisar = document.getElementById('btnPesquisar');
 	const btnLimpar = document.getElementById('btnLimpar');
 	const btnNovo = document.getElementById('btnNovo');
@@ -76,29 +30,81 @@ function inicializarPontoColeta() {
 		return;
 	}
 
+	// Inicializa o componente de paginação reutilizável
+	paginacao = new PaginacaoComponent({
+		containerId: 'paginacao',
+		totalRegistrosId: 'totalRegistros',
+		tamanhoPagina: 10,
+		onPageChange: (numeroPagina) => {
+			carregarPontosColeta(numeroPagina);
+		}
+	});
+
 	btnPesquisar.addEventListener('click', function() {
 		aplicarFiltros();
 	});
 
 	btnLimpar.addEventListener('click', function() {
 		limparFiltros();
-		renderizarTabela(dadosExemplo);
+		paginacao.voltarParaPrimeiraPagina();
 	});
 
 	btnNovo.addEventListener('click', function() {
-		abrirModalCadastro(null, (novosDados) => {
-			// Callback após salvar - adiciona aos dados de exemplo e atualiza tabela
-			if (!novosDados.id) {
-				novosDados.id = dadosExemplo.length + 1;
-				dadosExemplo.push(novosDados);
-			}
-			renderizarTabela(dadosExemplo);
+		abrirModalCadastro(null, () => {
+			// Callback após salvar - recarrega os dados do backend
+			carregarPontosColeta(paginacao.getPaginaAtual());
 		});
 	});
 
-	// Exibe dados iniciais
-	renderizarTabela(dadosExemplo);
+	// Carrega dados iniciais do backend
+	await carregarPontosColeta(0);
 	console.log('✅ Ponto de Coleta inicializado');
+}
+
+/**
+ * Carrega os pontos de coleta do backend
+ */
+async function carregarPontosColeta(pagina = 0) {
+	try {
+		console.log(`🔄 Carregando pontos de coleta - Página ${pagina + 1}...`);
+		const response = await pontosColetaService.listarTodos({
+			page: pagina,
+			size: paginacao.getTamanhoPagina(),
+			sort: 'id,desc'
+		});
+		
+		if (response && response.content) {
+			pontosDados = response.content;
+			
+			// Adapta a estrutura VIA_DTO do Spring para o formato esperado
+			const paginaInfo = {
+				content: response.content,
+				number: response.page?.number || 0,
+				totalPages: response.page?.totalPages || 0,
+				totalElements: response.page?.totalElements || 0,
+				size: response.page?.size || 10
+			};
+			
+			// Atualiza o componente de paginação com os dados adaptados
+			paginacao.atualizar(paginaInfo);
+			
+			// Renderiza a tabela
+			renderizarTabela(pontosDados);
+			
+			console.log(`✅ ${pontosDados.length} pontos carregados - Página ${paginaInfo.number + 1}/${paginaInfo.totalPages}`);
+		} else {
+			pontosDados = [];
+			paginacao.limpar();
+			renderizarTabela(pontosDados);
+			console.log('⚠️ Nenhum ponto de coleta encontrado');
+		}
+	} catch (error) {
+		console.error('❌ Erro ao carregar pontos de coleta:', error);
+		pontosDados = [];
+		paginacao.limpar();
+		renderizarTabela(pontosDados);
+		alert('Erro ao carregar pontos de coleta. Por favor, tente novamente.');
+	}
 }
 
 // Executa após um pequeno delay para garantir que o HTML foi injetado
@@ -109,60 +115,106 @@ setTimeout(inicializarPontoColeta, 100);
  */
 function renderizarTabela(dados) {
 	const tbody = document.querySelector('#tabelaPontos tbody');
-	const totalEl = document.getElementById('totalRegistros');
 	tbody.innerHTML = '';
 
 	if (!dados || dados.length === 0) {
 		tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum registro encontrado</td></tr>';
-		totalEl.textContent = 'Total de registros: 0';
 		return;
 	}
 
 	dados.forEach(item => {
+		// Formata o endereço (pode vir como string ou objeto)
+		let enderecoTexto = '';
+		if (typeof item.endereco === 'string') {
+			enderecoTexto = item.endereco;
+		} else if (item.endereco && typeof item.endereco === 'object') {
+			enderecoTexto = `${item.endereco.logradouro || ''} ${item.endereco.numero || ''}, ${item.endereco.bairro || ''} - ${item.endereco.cidade || ''}/${item.endereco.estado || ''}`;
+		} else {
+			enderecoTexto = 'Endereço não informado';
+		}
+		
 		// Formata a lista de materiais aceitos
+		// O backend retorna materiaisAceitos como array de strings: ["PAPEL", "PLASTICO"]
 		const materiaisHtml = item.materiaisAceitos && item.materiaisAceitos.length > 0
-			? item.materiaisAceitos.map(material => 
-				`<span class="badge bg-${EnumUtils.getCorTipoResiduo(material.tipo)} me-1">${EnumUtils.formatarTipoResiduo(material.tipo)}</span>`
-			).join('')
+			? item.materiaisAceitos.map(material => {
+				// Se for string, usa diretamente; se for objeto, pega a propriedade tipo
+				const tipoMaterial = typeof material === 'string' ? material : (material.tipo || material);
+				return `<span class="badge bg-${EnumUtils.getCorTipoResiduo(tipoMaterial)} me-1">${EnumUtils.formatarTipoResiduo(tipoMaterial)}</span>`;
+			}).join('')
 			: '<span class="text-muted">Nenhum</span>';
 
 		const tr = document.createElement('tr');
 		tr.innerHTML = `
-			<td>${item.nome}</td>
-			<td><small>${item.endereco}</small></td>
+			<td>${item.nome || item.nomePonto || 'Sem nome'}</td>
+			<td><small>${enderecoTexto}</small></td>
 			<td><span class="badge bg-primary">${EnumUtils.formatarTipoResiduo(item.tipoResiduo)}</span></td>
 			<td>${materiaisHtml}</td>
 			<td class="text-center">
 				<input type="checkbox" class="form-check-input" ${item.ativo ? 'checked' : ''} disabled readonly>
 			</td>
 			<td>
-				<button class="btn btn-outline-secondary btn-sm" title="Mais ações">
-					<i class="bi bi-three-dots-vertical"></i>
-				</button>
+				${criarBotaoAcoesPadrao(item.id)}
 			</td>
 		`;
 		tbody.appendChild(tr);
 	});
 
-	totalEl.textContent = `Total de registros: ${dados.length}`;
+	// Adiciona event listeners aos botões de ação
+	adicionarEventListeners(tbody, (action, id) => {
+		const pontoId = parseInt(id);
+		const pontoData = dados.find(p => p.id === pontoId);
+		
+		if (action === 'editar') {
+			abrirModalCadastro(pontoData, () => {
+				carregarPontosColeta(paginacao.getPaginaAtual());
+			});
+		} else if (action === 'excluir') {
+			excluirPontoColeta(pontoId, pontoData.nome || pontoData.nomePonto);
+		}
+	});
+}
+
+/**
+ * Exclui um ponto de coleta
+ * @param {number} id - ID do ponto de coleta
+ * @param {string} nome - Nome do ponto de coleta
+ */
+async function excluirPontoColeta(id, nome) {
+	// Confirmação antes de excluir
+	const confirmacao = confirm(`Tem certeza que deseja excluir o ponto de coleta "${nome}"?\n\nEsta ação não pode ser desfeita.`);
+	
+	if (!confirmacao) {
+		return;
+	}
+	
+	try {
+		console.log('🗑️ Excluindo ponto de coleta ID:', id);
+		
+		// Chama o serviço para excluir
+		await pontosColetaService.remover(id);
+		
+		console.log('✅ Ponto de coleta excluído com sucesso');
+		
+		// Mostra mensagem de sucesso
+		alert('Ponto de coleta excluído com sucesso!');
+		
+		// Recarrega a tabela
+		await carregarPontosColeta(paginacao.getPaginaAtual());
+		
+	} catch (error) {
+		console.error('❌ Erro ao excluir ponto de coleta:', error);
+		alert(`Erro ao excluir ponto de coleta: ${error.message}`);
+	}
 }
 
 /**
  * Aplicar filtro simples com base nos campos Nome, Tipo de Resíduo e Endereço
+ * Nota: Para filtros mais complexos, seria ideal implementar no backend
  */
 function aplicarFiltros() {
-	const nome = document.getElementById('filterNome').value.trim().toLowerCase();
-	const tipoResiduo = document.getElementById('filterTipoResiduo').value;
-	const endereco = document.getElementById('filterEndereco').value.trim().toLowerCase();
-
-	const filtrados = dadosExemplo.filter(item => {
-		const matchNome = nome ? item.nome.toLowerCase().includes(nome) : true;
-		const matchTipo = tipoResiduo ? (item.tipoResiduo === tipoResiduo) : true;
-		const matchEndereco = endereco ? item.endereco.toLowerCase().includes(endereco) : true;
-		return matchNome && matchTipo && matchEndereco;
-	});
-
-	renderizarTabela(filtrados);
+	// Recarrega a primeira página quando filtrar
+	// TODO: Futuramente, enviar filtros para o backend via query params
+	paginacao.voltarParaPrimeiraPagina();
 }
 
 /**
@@ -172,19 +224,5 @@ function limparFiltros() {
 	document.getElementById('filterNome').value = '';
 	document.getElementById('filterTipoResiduo').value = '';
 	document.getElementById('filterEndereco').value = '';
-}
-
-/**
- * Formata o tipo de resíduo do enum para texto legível
- */
-function formatarTipoResiduo(tipo) {
-	return EnumUtils.formatarTipoResiduo(tipo);
-}
-
-/**
- * Retorna a cor do badge baseado no tipo de resíduo
- */
-function getCorTipo(tipo) {
-	return EnumUtils.getCorTipoResiduo(tipo);
 }
 

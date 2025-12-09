@@ -19,7 +19,7 @@ let enderecoComponent = null;
 
 /**
  * Abre o modal para cadastrar um novo ponto de coleta ou editar existente
- * @param {number|null} pontoId - ID do ponto para edição, null para novo cadastro
+ * @param {Object|null} pontoData - Dados do ponto para edição, null para novo cadastro
  * @param {function} callback - Função de callback após salvar com sucesso
  */
 export function abrirModalCadastro(pontoId = null, callback = null) {
@@ -74,6 +74,57 @@ export function abrirModalCadastro(pontoId = null, callback = null) {
     .catch((error) => {
       console.error("❌ Erro ao abrir modal:", error);
     });
+export async function abrirModalCadastro(pontoData = null, callback = null) {
+	// Armazena o callback para ser usado ao salvar
+	callbackGlobal = callback;
+	
+	// Carrega o HTML do modal se ainda não estiver na página
+	carregarModalCadastro().then(async () => {
+		const modalElement = document.getElementById('modalCadastroPonto');
+		
+		if (!modalElement) {
+			console.error('❌ Elemento modal não encontrado no DOM');
+			return;
+		}
+		
+		// Verifica se Bootstrap está disponível
+		if (typeof bootstrap === 'undefined') {
+			// Fallback: abre o modal manualmente com CSS
+			modalElement.classList.add('show');
+			modalElement.style.display = 'block';
+			modalElement.setAttribute('aria-hidden', 'false');
+			modalElement.setAttribute('aria-modal', 'true');
+			document.body.classList.add('modal-open');
+			
+			// Cria o backdrop
+			const backdrop = document.createElement('div');
+			backdrop.className = 'modal-backdrop fade show';
+			backdrop.id = 'modalBackdrop';
+			document.body.appendChild(backdrop);
+		} else {
+			const modal = new bootstrap.Modal(modalElement);
+			modal.show();
+		}
+		
+		const titulo = document.getElementById('tituloModal');
+		const textoBotao = document.getElementById('textoBotaoSalvar');
+		
+		if (pontoData) {
+			// Modo edição
+			titulo.textContent = 'Editar Ponto de Coleta';
+			textoBotao.textContent = 'Salvar Alterações';
+			await carregarDadosPonto(pontoData);
+			bloquearFormularioPrincipal(false); // Já tem endereço salvo
+		} else {
+			// Modo cadastro
+			titulo.textContent = 'Cadastrar Ponto de Coleta';
+			textoBotao.textContent = 'Cadastrar';
+			limparFormulario();
+			bloquearFormularioPrincipal(true); // Bloqueia até salvar endereço
+		}
+	}).catch(error => {
+		console.error('❌ Erro ao abrir modal:', error);
+	});
 }
 
 /**
@@ -176,6 +227,24 @@ async function inicializarComponenteEndereco() {
     console.error("❌ Erro ao inicializar componente de endereço:", error);
     throw error;
   }
+	try {
+		// Cria nova instância do componente
+		enderecoComponent = new EnderecoComponent('enderecoContainer');
+		
+		// Inicializa o componente
+		await enderecoComponent.inicializar();
+		
+		// Configura callback quando endereço for salvo
+		enderecoComponent.onSave((enderecoSalvo) => {
+			console.log('✅ Endereço validado, liberando formulário:', enderecoSalvo);
+			bloquearFormularioPrincipal(false); // Libera o resto do formulário
+		});
+		
+		console.log('✅ Componente de endereço inicializado com sucesso');
+	} catch (error) {
+		console.error('❌ Erro ao inicializar componente de endereço:', error);
+		throw error;
+	}
 }
 
 /**
@@ -270,6 +339,42 @@ function popularSelects() {
     });
   }
 }
+/**
+ * Carrega os dados do ponto no formulário para edição
+ * @param {Object} pontoData - Dados do ponto de coleta
+ */
+async function carregarDadosPonto(pontoData) {
+	if (!pontoData) return;
+	
+	// Preenche os campos básicos
+	document.getElementById('pontoId').value = pontoData.id || '';
+	document.getElementById('pontoNome').value = pontoData.nome || pontoData.nomePonto || '';
+	document.getElementById('pontoTipoResiduo').value = pontoData.tipoResiduo || '';
+	document.getElementById('pontoAtivo').checked = pontoData.ativo !== false;
+	
+	// Marca os checkboxes de materiais aceitos
+	if (pontoData.materiaisAceitos && Array.isArray(pontoData.materiaisAceitos)) {
+		pontoData.materiaisAceitos.forEach(material => {
+			const materialTipo = material.tipo || material;
+			const checkbox = document.getElementById(`mat${materialTipo}`);
+			if (checkbox) {
+				checkbox.checked = true;
+			}
+		});
+	}
+	
+	// Carrega o endereço se existir
+	if (enderecoComponent) {
+		if (pontoData.endereco) {
+			// Se tem objeto de endereço, carrega ele
+			await enderecoComponent.carregarEndereco(pontoData.endereco);
+		} else if (pontoData.enderecoId) {
+			// Se tem apenas ID, busca do backend
+			await enderecoComponent.carregarEndereco(pontoData.enderecoId);
+		}
+	}
+}
+
 function limparFormulario() {
   document.getElementById("pontoId").value = "";
   document.getElementById("pontoNome").value = "";
@@ -348,6 +453,87 @@ export async function salvarPontoColeta() {
     console.error("Erro ao salvar ponto de coleta:", error);
     alert(`Erro ao salvar: ${error.message}`);
   }
+	const form = document.getElementById('formCadastroPonto');
+	
+	// Verifica se o endereço foi salvo (validado)
+	if (!enderecoComponent || !enderecoComponent.estaSalvo()) {
+		alert('Por favor, salve o endereço antes de cadastrar o ponto de coleta.');
+		return;
+	}
+	
+	// Valida o formulário
+	if (!form.checkValidity()) {
+		form.reportValidity();
+		return;
+	}
+
+	const btnSalvar = document.getElementById('btnSalvarPonto');
+	const textoBotao = document.getElementById('textoBotaoSalvar');
+	const textoOriginal = textoBotao.textContent;
+	
+	try {
+		// Desabilita o botão e mostra loading
+		if (btnSalvar) {
+			btnSalvar.disabled = true;
+			textoBotao.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...';
+		}
+
+		// PASSO 1: Persiste o endereço no banco de dados
+		console.log('📍 Passo 1: Persistindo endereço no banco...');
+		const enderecoResponse = await enderecoComponent.persistirEndereco();
+		
+		if (!enderecoResponse || !enderecoResponse.id) {
+			throw new Error('Falha ao salvar endereço. Não foi possível obter o ID.');
+		}
+		
+		const enderecoId = enderecoResponse.id;
+		console.log('✅ Endereço persistido com ID:', enderecoId);
+		
+		// PASSO 2: Coleta os dados do ponto de coleta
+		const pontoId = document.getElementById('pontoId').value;
+		const dados = {
+			id: pontoId || null,
+			nomePonto: document.getElementById('pontoNome').value,
+			tipoResiduo: document.getElementById('pontoTipoResiduo').value,
+			ativo: document.getElementById('pontoAtivo').checked,
+			materiaisAceitos: obterMateriaisAceitos(),
+			enderecoId: enderecoId // ID do endereço que acabou de ser salvo
+		};
+		
+		console.log('📦 Passo 2: Dados do ponto de coleta:', dados);
+		
+		// PASSO 3: Salva ou atualiza o ponto de coleta
+		let response;
+		if (pontoId) {
+			// Modo edição - atualiza ponto existente
+			console.log('🔄 Passo 3: Atualizando ponto de coleta existente...');
+			response = await pontosColetaService.atualizar(pontoId, dados);
+			console.log('✅ Ponto de coleta atualizado:', response);
+		} else {
+			// Modo cadastro - cria novo ponto
+			console.log('➕ Passo 3: Criando novo ponto de coleta...');
+			response = await pontosColetaService.criar(dados);
+			console.log('✅ Ponto de coleta criado:', response);
+		}
+		
+		// Fecha o modal
+		fecharModal();
+		
+		// Executa callback se fornecido (para atualizar a tabela na tela principal)
+		if (callbackGlobal && typeof callbackGlobal === 'function') {
+			callbackGlobal(dados);
+		}
+		
+	} catch (error) {
+		console.error('❌ Erro ao salvar ponto de coleta:', error);
+		alert(`Erro ao salvar: ${error.message}`);
+		
+		// Reabilita o botão em caso de erro
+		if (btnSalvar) {
+			btnSalvar.disabled = false;
+			textoBotao.textContent = textoOriginal;
+		}
+	}
 }
 
 /**

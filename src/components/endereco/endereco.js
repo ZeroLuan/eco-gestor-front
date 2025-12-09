@@ -364,20 +364,31 @@ export class EnderecoComponent {
     limpar() {
         this.enderecoId = null;
         this.enderecoSalvo = false;
-        document.getElementById('enderecoId').value = '';
-        document.getElementById('enderecoCep').value = '';
-        document.getElementById('enderecoLogradouro').value = '';
-        document.getElementById('enderecoNumero').value = '';
-        document.getElementById('enderecoComplemento').value = '';
-        document.getElementById('enderecoBairro').value = '';
-        document.getElementById('enderecoCidade').value = '';
-        document.getElementById('enderecoEstado').value = '';
+        const campoId = document.getElementById('enderecoId');
+        if (campoId) campoId.value = '';
+        
+        const campos = [
+            'enderecoCep', 'enderecoLogradouro', 'enderecoNumero',
+            'enderecoComplemento', 'enderecoBairro', 'enderecoCidade', 'enderecoEstado'
+        ];
+        
+        campos.forEach(campoId => {
+            const campo = document.getElementById(campoId);
+            if (campo) campo.value = '';
+        });
+        
         this.marcarComoNaoSalvo();
         
         // Reseta o texto do botão
         const textoBtn = document.getElementById('textoBtnSalvarEndereco');
         if (textoBtn) {
             textoBtn.textContent = 'Salvar Endereço';
+        }
+        
+        // Limpa alertas
+        const alerta = document.getElementById('enderecoAlerta');
+        if (alerta) {
+            alerta.classList.add('d-none');
         }
     }
 
@@ -405,7 +416,7 @@ export class EnderecoComponent {
         try {
             // Obtém os dados primeiro
             const dados = this.obterDados();
-            console.log('📝 Dados obtidos para salvar:', dados);
+            console.log('📝 Dados obtidos para validar:', dados);
 
             // Valida os dados
             const validacao = this.validar();
@@ -419,65 +430,42 @@ export class EnderecoComponent {
             const alerta = document.getElementById('enderecoAlerta');
             const alertaTexto = document.getElementById('enderecoAlertaTexto');
 
-            // Mostra loading
+            // Mostra loading brevemente
             if (btnSalvar) {
                 btnSalvar.disabled = true;
-                textoBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...';
+                textoBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Validando...';
             }
 
-            let response;
+            // Simula um pequeno delay para feedback visual
+            await new Promise(resolve => setTimeout(resolve, 500));
 
-            if (this.enderecoId) {
-                // Atualiza endereço existente
-                console.log('🔄 Atualizando endereço existente ID:', this.enderecoId);
-                response = await enderecoService.atualizar(this.enderecoId, dados);
-            } else {
-                // Cria novo endereço
-                console.log('➕ Criando novo endereço');
-                response = await enderecoService.criar(dados);
-            }
-
-            console.log('✅ Resposta da API:', response);
-
-            // Verifica se a resposta é válida
-            if (!response || typeof response !== 'object') {
-                throw new Error('Resposta inválida da API');
-            }
-
-            // Armazena o ID retornado
-            this.enderecoId = response.id;
+            // Marca como salvo (em memória)
             this.enderecoSalvo = true;
-
-            // Atualiza o campo hidden
-            const campoId = document.getElementById('enderecoId');
-            if (campoId) {
-                campoId.value = response.id || '';
-            }
+            console.log('✅ Endereço validado e salvo em memória');
 
             // Marca como salvo visualmente
             this.marcarComoSalvo();
 
             // Mostra mensagem de sucesso
             if (alerta && alertaTexto) {
-                alerta.classList.remove('d-none', 'alert-info');
+                alerta.classList.remove('d-none', 'alert-info', 'alert-warning', 'alert-danger');
                 alerta.classList.add('alert-success');
-                alertaTexto.innerHTML = '<i class="bi bi-check-circle me-2"></i>Endereço salvo com sucesso!';
+                alertaTexto.innerHTML = '<i class="bi bi-check-circle me-2"></i>Endereço validado! Será salvo ao cadastrar o ponto de coleta.';
                 
                 setTimeout(() => {
                     alerta.classList.add('d-none');
-                }, 3000);
+                }, 4000);
             }
 
             // Chama callback se fornecido
             if (this.onSaveCallback) {
-                this.onSaveCallback(response);
+                this.onSaveCallback(dados);
             }
 
-            console.log('✅ Endereço salvo com sucesso:', response);
-            return response;
+            return dados;
 
         } catch (error) {
-            console.error('❌ Erro ao salvar endereço:', error);
+            console.error('❌ Erro ao validar endereço:', error);
             
             const alerta = document.getElementById('enderecoAlerta');
             const alertaTexto = document.getElementById('enderecoAlertaTexto');
@@ -485,7 +473,7 @@ export class EnderecoComponent {
             if (alerta && alertaTexto) {
                 alerta.classList.remove('d-none', 'alert-info', 'alert-success');
                 alerta.classList.add('alert-danger');
-                alertaTexto.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>Erro ao salvar: ${error.message}`;
+                alertaTexto.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>Erro ao validar: ${error.message}`;
             }
 
             return null;
@@ -500,6 +488,71 @@ export class EnderecoComponent {
             }
         }
     }    /**
+     * Persiste o endereço no banco de dados (chamado ao cadastrar/editar ponto de coleta)
+     * @returns {Promise<Object>} Resposta da API com o ID do endereço salvo
+     */
+    async persistirEndereco() {
+        try {
+            const dados = this.obterDados();
+            console.log('💾 Persistindo endereço no banco:', dados);
+
+            // Valida os dados antes de persistir
+            const validacao = this.validar();
+            if (!validacao.isValid) {
+                throw new Error(`Dados inválidos: ${validacao.errors.join(', ')}`);
+            }
+
+            let response;
+
+            if (this.enderecoId) {
+                // Atualiza endereço existente
+                console.log('🔄 Atualizando endereço existente ID:', this.enderecoId);
+                response = await enderecoService.atualizar(this.enderecoId, dados);
+            } else {
+                // Cria novo endereço
+                console.log('➕ Criando novo endereço no banco');
+                response = await enderecoService.criar(dados);
+            }
+
+            console.log('✅ Resposta da API:', response);
+
+            // Verifica se a resposta é válida
+            if (!response || typeof response !== 'object') {
+                throw new Error('Resposta inválida da API');
+            }
+
+            // Armazena o ID retornado
+            this.enderecoId = response.id;
+
+            // Atualiza o campo hidden
+            const campoId = document.getElementById('enderecoId');
+            if (campoId) {
+                campoId.value = response.id || '';
+            }
+
+            console.log('✅ Endereço persistido com sucesso no banco:', response);
+            return response;
+
+        } catch (error) {
+            console.error('❌ Erro ao persistir endereço:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Retorna os dados validados do endereço para serem salvos
+     * @returns {Object|null} Dados do endereço ou null se inválido
+     */
+    getDadosParaSalvar() {
+        const validacao = this.validar();
+        if (!validacao.isValid) {
+            console.error('❌ Endereço inválido:', validacao.errors);
+            return null;
+        }
+        return this.obterDados();
+    }
+
+    /**
      * Marca visualmente que o endereço foi salvo
      */
     marcarComoSalvo() {
@@ -530,10 +583,10 @@ export class EnderecoComponent {
     }
 
     /**
-     * Verifica se o endereço está salvo
+     * Verifica se o endereço está salvo (validado e pronto para persistir)
      */
     estaSalvo() {
-        return this.enderecoSalvo && this.enderecoId !== null;
+        return this.enderecoSalvo;
     }
 
     /**
@@ -546,12 +599,33 @@ export class EnderecoComponent {
     /**
      * Carrega dados de um endereço existente
      */
-    async carregarEndereco(id) {
+    async carregarEndereco(enderecoData) {
         try {
-            // TODO: Integrar com enderecoService quando estiver pronto
-            console.log('Carregando endereço ID:', id);
-            // const endereco = await enderecoService.buscarPorId(id);
-            // this.preencherCampos(endereco);
+            // Se receber um ID numérico, busca do backend
+            if (typeof enderecoData === 'number') {
+                console.log('Carregando endereço do backend, ID:', enderecoData);
+                const endereco = await enderecoService.buscarPorId(enderecoData);
+                this.preencherCampos(endereco);
+                this.enderecoId = enderecoData;
+                this.enderecoSalvo = true;
+                this.marcarComoSalvo();
+            } 
+            // Se receber um objeto com os dados, preenche diretamente
+            else if (typeof enderecoData === 'object' && enderecoData !== null) {
+                console.log('Carregando endereço de objeto:', enderecoData);
+                this.preencherCampos(enderecoData);
+                
+                // Se o objeto tem ID, marca como já salvo no banco
+                if (enderecoData.id) {
+                    this.enderecoId = enderecoData.id;
+                    this.enderecoSalvo = true;
+                    this.marcarComoSalvo();
+                } else {
+                    // Dados sem ID, apenas preenche mas não marca como salvo
+                    this.enderecoId = null;
+                    this.enderecoSalvo = false;
+                }
+            }
         } catch (error) {
             console.error('Erro ao carregar endereço:', error);
             throw error;

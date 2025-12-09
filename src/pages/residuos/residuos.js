@@ -6,6 +6,17 @@
 import { abrirModalColeta } from "./registra-coleta-residuos/registra-coleta-residuos.js";
 
 let dados = [];
+import { criarBotaoAcoesPadrao, adicionarEventListeners } from '../../components/common/botao-acoes/botao-acoes.js';
+
+// Exemplo de dados de teste
+const dadosExemplo = [
+	{ id: 1, data: '2024-11-10', tipo: 'Plástico', quantidade: 150, local: 'Centro', responsavel: 'João Silva' },
+	{ id: 2, data: '2024-11-09', tipo: 'Papel', quantidade: 200, local: 'Bairro Norte', responsavel: 'Maria Santos' },
+	{ id: 3, data: '2024-11-08', tipo: 'Metal', quantidade: 80, local: 'Zona Industrial', responsavel: 'Carlos Oliveira' },
+	{ id: 4, data: '2024-11-07', tipo: 'Vidro', quantidade: 120, local: 'Centro', responsavel: 'Ana Paula' },
+	{ id: 5, data: '2024-11-06', tipo: 'Orgânico', quantidade: 300, local: 'Zona Rural', responsavel: 'Pedro Costa' },
+	{ id: 6, data: '2024-11-05', tipo: 'Eletrônico', quantidade: 45, local: 'Centro', responsavel: 'Lucas Ferreira' }
+];
 
 // Inicializa elementos e eventos imediatamente (SPA já carregou o HTML)
 function inicializarResiduos() {
@@ -96,15 +107,25 @@ function renderizarTabela(dados) {
 			<td>${item.local}</td>
 			<td>${item.nomeResponsavel}</td>
 			<td>
-				<button class="btn btn-outline-secondary btn-sm" title="Mais ações">
-					<i class="bi bi-three-dots-vertical"></i>
-				</button>
+				${criarBotaoAcoesPadrao(item.id)}
 			</td>
 		`;
     tbody.appendChild(tr);
   });
 
   if (totalEl) totalEl.textContent = `Total de registros: ${dados.length}`;
+	// Adiciona event listeners aos botões de ação
+	adicionarEventListeners(tbody, (action, id) => {
+		if (action === 'editar') {
+			alert(`Editar resíduo ID: ${id}`);
+		} else if (action === 'excluir') {
+			if (confirm('Tem certeza que deseja excluir este registro?')) {
+				alert(`Excluir resíduo ID: ${id}`);
+			}
+		}
+	});
+
+	if (totalEl) totalEl.textContent = `Total de registros: ${dados.length}`;
 }
 
 /**

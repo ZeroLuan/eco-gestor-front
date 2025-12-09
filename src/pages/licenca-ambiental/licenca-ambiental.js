@@ -4,6 +4,7 @@
  */
 
 import { abrirModalCadastroLicenca } from "../licenca-ambiental/cadastra-licenca-ambiental/cadastra-licenca-ambiental.js";
+import { criarBotaoAcoesPadrao, adicionarEventListeners } from '../../components/common/botao-acoes/botao-acoes.js';
 
 // Exemplo de dados de teste
 const dadosExemplo = [
@@ -131,15 +132,25 @@ function renderizarTabela(dados) {
 			<td>${formatarDataBR(item.validade)}</td>
 			<td><span class="badge bg-${statusClass}">${item.status}</span></td>
 			<td>
-				<button class="btn btn-outline-secondary btn-sm" title="Mais ações">
-					<i class="bi bi-three-dots-vertical"></i>
-				</button>
+				${criarBotaoAcoesPadrao(item.id)}
 			</td>
 		`;
     tbody.appendChild(tr);
   });
 
   if (totalEl) totalEl.textContent = `Total de registros: ${dados.length}`;
+	// Adiciona event listeners aos botões de ação
+	adicionarEventListeners(tbody, (action, id) => {
+		if (action === 'editar') {
+			alert(`Editar licença ID: ${id}`);
+		} else if (action === 'excluir') {
+			if (confirm('Tem certeza que deseja excluir esta licença?')) {
+				alert(`Excluir licença ID: ${id}`);
+			}
+		}
+	});
+
+	if (totalEl) totalEl.textContent = `Total de registros: ${dados.length}`;
 }
 
 /**
