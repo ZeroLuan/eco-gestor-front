@@ -9,7 +9,7 @@ export class ResiduosRequest {
   constructor(data = {}) {
     this.tipoResiduo = data.tipoResiduo || "";
     this.peso = data.peso || 0;
-    this.pontoColetaId = data.pontoColetaId || "";
+    this.idPontoColeta = data.idPontoColeta || data.pontoColetaId || "";
     this.nomeResponsavel = data.nomeResponsavel || "";
     this.dataColeta = data.dataColeta || null;
   }
@@ -29,7 +29,7 @@ export class ResiduosRequest {
       errors.push("Quantidade deve ser maior que zero");
     }
 
-    if (!this.pontoColetaId) {
+    if (!this.idPontoColeta) {
       errors.push("Local é obrigatório");
     }
 
@@ -54,7 +54,7 @@ export class ResiduosRequest {
     return {
       tipoResiduo: this.tipoResiduo,
       peso: this.peso,
-      pontoColetaId: this.pontoColetaId,
+      idPontoColeta: this.idPontoColeta,
       nomeResponsavel: this.nomeResponsavel,
       dataColeta: this.dataColeta,
     };
@@ -69,7 +69,8 @@ export class ResiduosResponse {
     this.id = data.id || null;
     this.tipoResiduo = data.tipoResiduo || "";
     this.peso = data.peso || 0;
-    this.pontoColetaId = data.pontoColetaId || "";
+    this.idPontoColeta = data.idPontoColeta || data.pontoColetaId || "";
+    this.local = data.local || "";
     this.nomeResponsavel = data.nomeResponsavel || "";
     this.dataColeta = data.dataColeta || null;
   }
@@ -88,9 +89,10 @@ export class ResiduosResponse {
       ...apiData,
       tipoResiduo: apiData.tipoResiduo || "",
       peso: apiData.peso || 0,
-      pontoColetaId: apiData.pontoColetaId || "",
+      idPontoColeta: apiData.idPontoColeta || apiData.pontoColetaId || "",
+      local: apiData.local || "",
       nomeResponsavel: apiData.nomeResponsavel || "",
-      dataColeta: apiData.dataColeta || null,
+      dataColeta: apiData.dataColeta || apiData.dataInicio || null,
     });
   }
 
@@ -100,11 +102,11 @@ export class ResiduosResponse {
   toTableRow() {
     return {
       id: this.id,
-      tipoResiduo: this.tipoResiduo,
+      data: this.dataColeta,
+      tipo: this.tipoResiduo,
       peso: this.peso,
-      pontoColetaId: this.pontoColetaId,
+      local: this.local,
       nomeResponsavel: this.nomeResponsavel,
-      dataColeta: this.dataColeta,
     };
   }
 }
@@ -115,7 +117,7 @@ export class ResiduosResponse {
 export class ResiduosFiltro {
   constructor(data = {}) {
     this.tipoResiduo = data.tipoResiduo || "";
-    this.pontoColetaId = data.pontoColetaId || "";
+    this.idPontoColeta = data.idPontoColeta || data.pontoColetaId || "";
     this.nomeResponsavel = data.nomeResponsavel || "";
     this.dataInicio = data.dataInicio || null;
     this.dataFim = data.dataFim || null;
@@ -132,7 +134,7 @@ export class ResiduosFiltro {
     const params = new URLSearchParams();
 
     if (this.tipoResiduo) params.append("tipoResiduo", this.tipoResiduo);
-    if (this.pontoColetaId) params.append("local", this.pontoColetaId);
+    if (this.idPontoColeta) params.append("local", this.idPontoColeta);
     if (this.nomeResponsavel)
       params.append("responsavel", this.nomeResponsavel);
     if (this.dataInicio) params.append("dataInicio", this.dataInicio);

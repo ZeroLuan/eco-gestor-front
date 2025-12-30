@@ -81,48 +81,6 @@ function aplicarFiltros() {
   } else {
     renderizarTabela(filtrados);
   }
-function renderizarTabela(dados) {
-	const tbody = document.querySelector('#tabelaCooperativas tbody');
-	const totalEl = document.getElementById('totalRegistros');
-	
-	if (!tbody) return;
-	
-	tbody.innerHTML = '';
-
-	if (!dados || dados.length === 0) {
-		tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum registro encontrado</td></tr>';
-		if (totalEl) totalEl.textContent = 'Total de registros: 0';
-		return;
-	}
-
-	dados.forEach(item => {
-		const statusClass = item.status === 'Ativa' ? 'success' : (item.status === 'Inativa' ? 'danger' : 'warning');
-		const tr = document.createElement('tr');
-		tr.innerHTML = `
-			<td>${item.nome}</td>
-			<td>${item.cnpj}</td>
-			<td>${item.responsavel}</td>
-			<td>${item.telefone}</td>
-			<td><span class="badge bg-${statusClass}">${item.status}</span></td>
-			<td>
-				${criarBotaoAcoesPadrao(item.id)}
-			</td>
-		`;
-		tbody.appendChild(tr);
-	});
-
-	// Adiciona event listeners aos botões de ação
-	adicionarEventListeners(tbody, (action, id) => {
-		if (action === 'editar') {
-			alert(`Editar cooperativa ID: ${id}`);
-		} else if (action === 'excluir') {
-			if (confirm('Tem certeza que deseja excluir esta cooperativa?')) {
-				alert(`Excluir cooperativa ID: ${id}`);
-			}
-		}
-	});
-
-	if (totalEl) totalEl.textContent = `Total de registros: ${dados.length}`;
 }
 
 /**

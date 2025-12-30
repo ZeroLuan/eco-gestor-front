@@ -3,6 +3,7 @@
 // -----------------------------------
 
 import { residuosService } from "../../../services/residuos/residuosService";
+import { pontosColetaService } from "../../../services/pontosColeta/pontosColetaService";
 
 // Armazena o callback global para ser usado ao salvar
 let callbackGlobal = null;
@@ -83,6 +84,25 @@ async function carregarModalColeta() {
       btnSalvar.addEventListener("click", salvarColeta);
     }
 
+    // Configura event listener para o select de tipo de resíduo
+    const selectTipoResiduo = document.getElementById("coletaTipoResiduo");
+    if (selectTipoResiduo) {
+      selectTipoResiduo.addEventListener("change", async function() {
+        const tipo = this.value;
+        if (tipo) {
+          try {
+            const pontos = await pontosColetaService.buscarPorTipoResiduo(tipo);
+            popularSelectLocal(pontos);
+          } catch (error) {
+            console.error("Erro ao carregar pontos de coleta:", error);
+            popularSelectLocal([]);
+          }
+        } else {
+          popularSelectLocal([]);
+        }
+      });
+    }
+
     // Configura botões de fechar
     const btnsFechar = document.querySelectorAll('[data-bs-dismiss="modal"]');
     btnsFechar.forEach((btn) => {
@@ -126,6 +146,35 @@ function fecharModal() {
 }
 
 /**
+ * Limpa o formulário de coleta
+ */
+function limparFormularioColeta() {
+  document.getElementById("coletaId").value = "";
+  document.getElementById("coletaTipoResiduo").value = "";
+  document.getElementById("coletaPeso").value = "";
+  document.getElementById("coletaLocal").value = "";
+  document.getElementById("coletaNomeResponsavel").value = "";
+  document.getElementById("coletaData").value = "";
+}
+
+/**
+ * Popula o select de local/ponto de coleta com os pontos retornados
+ * @param {Array} pontos - Lista de pontos de coleta
+ */
+function popularSelectLocal(pontos) {
+  const select = document.getElementById("coletaLocal");
+  select.innerHTML = '<option value="">Selecione...</option>';
+  if (pontos && pontos.length > 0) {
+    pontos.forEach(ponto => {
+      const option = document.createElement("option");
+      option.value = ponto.id;
+      option.textContent = ponto.nomePonto;
+      select.appendChild(option);
+    });
+  }
+}
+
+/**
  * Salva a coleta de resíduos (registro ou edição)
  */
 export async function salvarColeta() {
@@ -139,7 +188,7 @@ export async function salvarColeta() {
 
   // Coleta os dados do formulário e adapta para ResiduosRequest
   const dados = {
-    pontoColetaId: parseInt(document.getElementById("coletaLocal").value),
+    idPontoColeta: parseInt(document.getElementById("coletaLocal").value),
     tipoResiduo: document.getElementById("coletaTipoResiduo").value,
     peso: parseFloat(document.getElementById("coletaPeso").value),
     nomeResponsavel: document.getElementById("coletaNomeResponsavel").value,

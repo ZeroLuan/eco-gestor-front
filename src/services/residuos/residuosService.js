@@ -8,19 +8,74 @@ import {
 
 class ResiduosService {
   /**
-   * Lista todas as coletas de resíduos com paginação e filtros
-   * @param {ResiduosFiltro} filtro - Filtros e paginação
-   * @returns {Promise<PaginacaoResponse>} Lista paginada de coletas
+   * Lista todas as coletas de resíduos com paginação
+   * @param {Object} params - Parâmetros de paginação (page, size, sort)
+   * @returns {Promise<Object>} Lista paginada de coletas
    */
-  async listarTodos(filtro = new ColetaFiltro()) {
+  async listarTodos(params = {}) {
     try {
-      const queryString = filtro.toQueryString();
-      const url = `/coleta-residuos${queryString ? `?${queryString}` : ""}`;
+      // Define valores padrão para paginação
+      const page = params.page || 0;
+      const size = params.size || 10;
+      const sort = params.sort || 'id,asc';
+
+      // Monta query string no formato Spring Boot
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        size: size.toString(),
+        sort: sort
+      });
+
+      const url = `/residuos/busca/paginada?${queryParams.toString()}`;
+      console.log('🔍 Buscando resíduos:', url);
 
       const response = await apiClient.get(url);
-      return new PaginacaoResponse(response.data);
+
+      // O Spring Boot retorna um objeto Page com esta estrutura:
+      // { content: [], totalElements, totalPages, number, size, etc }
+      return response;
     } catch (error) {
-      console.error("Erro ao listar coletas de resíduos:", error.message);
+      console.error('Erro ao listar resíduos:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Busca resíduos com filtros
+   * @param {Object} filtros - Objeto com filtros
+   * @param {Object} params - Parâmetros de paginação (page, size, sort)
+   * @returns {Promise<Object>} Lista paginada de resíduos filtrados
+   */
+  async buscarComFiltros(filtros = {}, params = {}) {
+    try {
+      // Define valores padrão para paginação
+      const page = params.page || 0;
+      const size = params.size || 10;
+      const sort = params.sort || 'id,desc';
+
+      // Monta query string no formato Spring Boot
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        size: size.toString(),
+        sort: sort
+      });
+
+      // Monta o body da requisição
+      const requestBody = {
+        tipoResiduo: filtros.tipoResiduo || null,
+        nomeResponsavel: filtros.nomeResponsavel || null,
+        dataColeta: filtros.dataColeta || null,
+        // Adicione outros filtros conforme necessário
+      };
+
+      const url = `/residuos/busca/filtro?${queryParams.toString()}`;
+      console.log('🔍 Buscando resíduos com filtros:', url, requestBody);
+
+      const response = await apiClient.post(url, requestBody);
+
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar resíduos com filtros:', error.message);
       throw error;
     }
   }
@@ -28,14 +83,14 @@ class ResiduosService {
   /**
    * Busca uma coleta por ID
    * @param {number} id - ID da coleta
-   * @returns {Promise<ColetaResponse>} Dados da coleta
+   * @returns {Promise<ResiduosResponse>} Dados da coleta
    */
   async buscarPorId(id) {
     try {
-      const response = await apiClient.get(`/coleta-residuos/${id}`);
+      const response = await apiClient.get(`/residuos/${id}`);
       return ResiduosResponse.fromAPI(response);
     } catch (error) {
-      console.error("Erro ao buscar coleta:", error.message);
+      console.error('Erro ao buscar resíduo:', error.message);
       throw error;
     }
   }
@@ -87,12 +142,12 @@ class ResiduosService {
       }
 
       const response = await apiClient.put(
-        `/coleta-residuos/${id}`,
+        `/residuos/editar/${id}`,
         request.toJSON()
       );
       return ResiduosResponse.fromAPI(response);
     } catch (error) {
-      console.error("Erro ao atualizar coleta:", error.message);
+      console.error("Erro ao atualizar resíduo:", error.message);
       throw error;
     }
   }
@@ -100,30 +155,14 @@ class ResiduosService {
   /**
    * Remove uma coleta
    * @param {number} id - ID da coleta
-   * @returns {Promise<void>}
+   * @returns {Promise<ResiduosResponse>}
    */
   async remover(id) {
     try {
-      await apiClient.delete(`/coleta-residuos/${id}`);
+      const response = await apiClient.delete(`/residuos/remove/${id}`);
+      return response; // Pode retornar o response ou apenas confirmar
     } catch (error) {
-      console.error("Erro ao remover coleta:", error.message);
-      throw error;
-    }
-  }
-
-  /**
-   * Lista coletas filtradas por tipo de resíduo
-   * @param {string} tipoResiduo - Tipo de resíduo
-   * @returns {Promise<Array<ColetaResponse>>}
-   */
-  async buscarPorTipo(tipoResiduo) {
-    try {
-      const response = await apiClient.get(
-        `/coleta-residuos/tipo/${tipoResiduo}`
-      );
-      return response.map((item) => ResiduosResponse.fromAPI(item));
-    } catch (error) {
-      console.error("Erro ao buscar coletas por tipo:", error.message);
+      console.error("Erro ao remover resíduo:", error.message);
       throw error;
     }
   }

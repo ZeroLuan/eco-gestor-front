@@ -213,6 +213,21 @@ class PontosColetaService {
             throw error;
         }
     }
+
+    /**
+     * Busca pontos de coleta por tipo de resíduo
+     * @param {string} tipoResiduo - Tipo de resíduo (enum EnumTipoResiduo)
+     * @returns {Promise<Array<PontoColetaResponse>>} Lista de pontos de coleta
+     */
+    async buscarPorTipoResiduo(tipoResiduo) {
+        try {
+            const response = await apiClient.get(`/ponto-coleta/busca/tipo-residuo/${tipoResiduo}`);
+            return response;
+        } catch (error) {
+            console.error('Erro ao buscar pontos de coleta por tipo de resíduo:', error.message);
+            throw error;
+        }
+    }
 }
 
 export const pontosColetaService = new PontosColetaService();

@@ -4,19 +4,16 @@
  */
 
 import { abrirModalColeta } from "./registra-coleta-residuos/registra-coleta-residuos.js";
+import { apiClient } from "../../services/api.js";
+import { ResiduosResponse } from "../../services/residuos/residuosTypes.js";
+import { residuosService } from "../../services/residuos/residuosService.js";
+import { PaginacaoComponent } from '../../components/paginacao/paginacao.js';
 
 let dados = [];
 import { criarBotaoAcoesPadrao, adicionarEventListeners } from '../../components/common/botao-acoes/botao-acoes.js';
 
-// Exemplo de dados de teste
-const dadosExemplo = [
-	{ id: 1, data: '2024-11-10', tipo: 'Plástico', quantidade: 150, local: 'Centro', responsavel: 'João Silva' },
-	{ id: 2, data: '2024-11-09', tipo: 'Papel', quantidade: 200, local: 'Bairro Norte', responsavel: 'Maria Santos' },
-	{ id: 3, data: '2024-11-08', tipo: 'Metal', quantidade: 80, local: 'Zona Industrial', responsavel: 'Carlos Oliveira' },
-	{ id: 4, data: '2024-11-07', tipo: 'Vidro', quantidade: 120, local: 'Centro', responsavel: 'Ana Paula' },
-	{ id: 5, data: '2024-11-06', tipo: 'Orgânico', quantidade: 300, local: 'Zona Rural', responsavel: 'Pedro Costa' },
-	{ id: 6, data: '2024-11-05', tipo: 'Eletrônico', quantidade: 45, local: 'Centro', responsavel: 'Lucas Ferreira' }
-];
+// Componente de paginação reutilizável
+let paginacao = null;
 
 // Inicializa elementos e eventos imediatamente (SPA já carregou o HTML)
 function inicializarResiduos() {
@@ -28,6 +25,16 @@ function inicializarResiduos() {
     console.error("❌ Elementos não encontrados na página de resíduos");
     return;
   }
+
+  // Inicializa o componente de paginação reutilizável
+  paginacao = new PaginacaoComponent({
+    containerId: 'paginacao',
+    totalRegistrosId: 'totalRegistros',
+    tamanhoPagina: 10,
+    onPageChange: (numeroPagina) => {
+      carregarResiduos(numeroPagina);
+    }
+  });
 
   if (btnPesquisar) {
     btnPesquisar.addEventListener("click", function () {
@@ -42,30 +49,81 @@ function inicializarResiduos() {
 
   btnNovo.addEventListener("click", function () {
     abrirModalColeta(null, (novaColeta) => {
-      // Callback após salvar - adiciona aos dados e atualiza tabela
-      if (!novaColeta.id) {
-        novaColeta.id = dados.length + 1;
-        dados.push(novaColeta);
-      }
-      renderizarTabela(dados);
+      // Callback após salvar - recarrega os dados do backend
+      carregarResiduos(paginacao.getPaginaAtual());
     });
   });
 
-  // Exibe dados iniciais
-  carregarResiduos(); // função que busca na API
+  // Carrega dados iniciais do backend
+  carregarResiduos(0);
   console.log("✅ Resíduos inicializados");
 }
 
 // Executa após um pequeno delay para garantir que o HTML foi injetado
 setTimeout(inicializarResiduos, 100);
 
-async function carregarResiduos() {
+async function carregarResiduos(pagina = 0) {
   try {
-    const response = await apiClient.get("/residuos/listar");
-    dados = response || [];
-    renderizarTabela(dados);
+    console.log(`🔄 Carregando resíduos - Página ${pagina + 1}...`);
+    
+    // Captura os filtros ativos
+    const filtros = obterFiltrosAtivos();
+    const temFiltros = Object.keys(filtros).length > 0;
+    
+    // Se houver filtros, usa buscarComFiltros, senão usa listarTodos
+    let response = temFiltros
+      ? await residuosService.buscarComFiltros(filtros, {
+        page: pagina,
+        size: paginacao.getTamanhoPagina(),
+        sort: 'id,desc'
+      })
+      : await residuosService.listarTodos({
+        page: pagina,
+        size: paginacao.getTamanhoPagina(),
+        sort: 'id,desc'
+      });
+    
+    // Se filtrou mas não encontrou nada, busca todos
+    if (temFiltros && (!response || !response.content || response.content.length === 0)) {
+      console.log('⚠️ Filtro não retornou resultados. Buscando todos...');
+      response = await residuosService.listarTodos({
+        page: 0,
+        size: paginacao.getTamanhoPagina(),
+        sort: 'id,desc'
+      });
+    }
+    
+    if (response && response.content) {
+      dados = response.content;
+      
+      // Adapta a estrutura VIA_DTO do Spring para o formato esperado
+      const paginaInfo = {
+        content: response.content,
+        number: response.page?.number || 0,
+        totalPages: response.page?.totalPages || 0,
+        totalElements: response.page?.totalElements || 0,
+        size: response.page?.size || 10
+      };
+      
+      // Atualiza o componente de paginação com os dados adaptados
+      paginacao.atualizar(paginaInfo);
+      
+      // Renderiza a tabela
+      renderizarTabela(dados);
+      
+      console.log(`✅ ${dados.length} resíduos carregados - Página ${paginaInfo.number + 1}/${paginaInfo.totalPages}`);
+    } else {
+      dados = [];
+      paginacao.limpar();
+      renderizarTabela(dados);
+      console.log('⚠️ Nenhum resíduo encontrado');
+    }
   } catch (error) {
-    console.error("❌ Erro ao carregar resíduos:", error.message);
+    console.error('❌ Erro ao carregar resíduos:', error);
+    dados = [];
+    paginacao.limpar();
+    renderizarTabela(dados);
+    alert('Erro ao carregar resíduos. Por favor, tente novamente.');
   }
 }
 /**
@@ -86,22 +144,22 @@ function renderizarTabela(dados) {
     return;
   }
 
-  // Cores por tipo de resíduo
+  // Cores por tipo de resíduo (ajustado para maiúsculo do back-end)
   const coresTipo = {
-    Plástico: "danger",
-    Papel: "primary",
-    Metal: "secondary",
-    Vidro: "info",
-    Orgânico: "success",
-    Eletrônico: "warning",
+    PLASTICO: "danger",
+    PAPEL: "primary",
+    METAL: "secondary",
+    VIDRO: "info",
+    ORGANICO: "success",
+    ELETRONICO: "warning",
   };
 
   dados.forEach((item) => {
-    const corTipo = coresTipo[item.tipo] || "secondary";
+    const corTipo = coresTipo[item.tipoResiduo] || "secondary";
     const tr = document.createElement("tr");
     tr.innerHTML = `
-			<td>${formatarDataBR(item.data)}</td>
-			<td><span class="badge bg-${corTipo}">${item.tipo}</span></td>
+			<td>${formatarDataBR(item.dataColeta || item.dataInicio)}</td>
+			<td><span class="badge bg-${corTipo}">${item.tipoResiduo}</span></td>
 			<td>${item.peso} kg</td>
 			<td>${item.local}</td>
 			<td>${item.nomeResponsavel}</td>
@@ -131,27 +189,8 @@ function renderizarTabela(dados) {
  * Aplicar filtro
  */
 function aplicarFiltros() {
-  const tipo = document.getElementById("filterTipo")?.value || "";
-  const dataInicio = document.getElementById("filterDataInicio")?.value || "";
-  const dataFim = document.getElementById("filterDataFim")?.value || "";
-  const local =
-    document.getElementById("filterLocal")?.value.trim().toLowerCase() || "";
-
-  const filtrados = dados.filter((item) => {
-    const matchTipo = tipo ? item.tipo === tipo : true;
-    const matchDataInicio = dataInicio ? item.data >= dataInicio : true;
-    const matchDataFim = dataFim ? item.data <= dataFim : true;
-    const matchLocal = local ? item.local.toLowerCase().includes(local) : true;
-    return matchTipo && matchDataInicio && matchDataFim && matchLocal;
-  });
-
-  // Se não encontrou nada com filtros, mostra todos
-  if (filtrados.length === 0) {
-    console.log('⚠️ Filtro não retornou resultados. Mostrando todos...');
-    renderizarTabela(dados);
-  } else {
-    renderizarTabela(filtrados);
-  }
+  // Apenas recarrega com filtros ativos
+  carregarResiduos(0);
 }
 
 /**
@@ -169,7 +208,28 @@ async function limparFiltros() {
   if (filterLocal) filterLocal.value = "";
   
   // Recarrega todos os registros
-  renderizarTabela(dados);
+  carregarResiduos(0);
+}
+
+/**
+ * Obtém os filtros ativos dos campos de entrada
+ */
+function obterFiltrosAtivos() {
+  const filtros = {};
+
+  const tipo = document.getElementById("filterTipo")?.value;
+  if (tipo) filtros.tipoResiduo = tipo;
+
+  const dataInicio = document.getElementById("filterDataInicio")?.value;
+  if (dataInicio) filtros.dataInicio = dataInicio;
+
+  const dataFim = document.getElementById("filterDataFim")?.value;
+  if (dataFim) filtros.dataFim = dataFim;
+
+  const local = document.getElementById("filterLocal")?.value.trim();
+  if (local) filtros.local = local;
+
+  return filtros;
 }
 
 /**
