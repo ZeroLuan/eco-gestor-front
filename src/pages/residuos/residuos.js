@@ -172,12 +172,29 @@ function renderizarTabela(dados) {
 
   if (totalEl) totalEl.textContent = `Total de registros: ${dados.length}`;
 	// Adiciona event listeners aos botões de ação
-	adicionarEventListeners(tbody, (action, id) => {
+	adicionarEventListeners(tbody, async (action, id) => {
 		if (action === 'editar') {
-			alert(`Editar resíduo ID: ${id}`);
+			// Busca os dados do resíduo para edição
+			try {
+				const residuoData = await residuosService.buscarPorId(id);
+				abrirModalColeta(residuoData, () => {
+					// Callback após salvar - recarrega os dados do backend
+					carregarResiduos(paginacao.getPaginaAtual());
+				});
+			} catch (error) {
+				console.error('Erro ao buscar dados para edição:', error);
+				alert('Erro ao carregar dados para edição. Tente novamente.');
+			}
 		} else if (action === 'excluir') {
 			if (confirm('Tem certeza que deseja excluir este registro?')) {
-				alert(`Excluir resíduo ID: ${id}`);
+				try {
+					await residuosService.remover(id);
+					alert('Resíduo excluído com sucesso!');
+					carregarResiduos(paginacao.getPaginaAtual());
+				} catch (error) {
+					console.error('Erro ao excluir resíduo:', error);
+					alert('Erro ao excluir resíduo. Tente novamente.');
+				}
 			}
 		}
 	});
@@ -198,11 +215,13 @@ function aplicarFiltros() {
  */
 async function limparFiltros() {
   const filterTipo = document.getElementById("filterTipo");
+  const filterNomeResponsavel = document.getElementById("filterNomeResponsavel");
   const filterDataInicio = document.getElementById("filterDataInicio");
   const filterDataFim = document.getElementById("filterDataFim");
   const filterLocal = document.getElementById("filterLocal");
 
   if (filterTipo) filterTipo.value = "";
+  if (filterNomeResponsavel) filterNomeResponsavel.value = "";
   if (filterDataInicio) filterDataInicio.value = "";
   if (filterDataFim) filterDataFim.value = "";
   if (filterLocal) filterLocal.value = "";
@@ -219,6 +238,9 @@ function obterFiltrosAtivos() {
 
   const tipo = document.getElementById("filterTipo")?.value;
   if (tipo) filtros.tipoResiduo = tipo;
+
+  const nomeResponsavel = document.getElementById("filterNomeResponsavel")?.value.trim();
+  if (nomeResponsavel) filtros.nomeResponsavel = nomeResponsavel;
 
   const dataInicio = document.getElementById("filterDataInicio")?.value;
   if (dataInicio) filtros.dataInicio = dataInicio;

@@ -5,6 +5,7 @@ import {
   ResiduosFiltro,
   PaginacaoResponse,
 } from "./residuosTypes.js";
+import { buildPaginationParams } from "../../utils/pagination.js";
 
 class ResiduosService {
   /**
@@ -14,17 +15,8 @@ class ResiduosService {
    */
   async listarTodos(params = {}) {
     try {
-      // Define valores padrão para paginação
-      const page = params.page || 0;
-      const size = params.size || 10;
-      const sort = params.sort || 'id,asc';
-
       // Monta query string no formato Spring Boot
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        size: size.toString(),
-        sort: sort
-      });
+      const queryParams = buildPaginationParams(params);
 
       const url = `/residuos/busca/paginada?${queryParams.toString()}`;
       console.log('🔍 Buscando resíduos:', url);
@@ -48,24 +40,16 @@ class ResiduosService {
    */
   async buscarComFiltros(filtros = {}, params = {}) {
     try {
-      // Define valores padrão para paginação
-      const page = params.page || 0;
-      const size = params.size || 10;
-      const sort = params.sort || 'id,desc';
-
       // Monta query string no formato Spring Boot
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        size: size.toString(),
-        sort: sort
-      });
+      const queryParams = buildPaginationParams(params, 'id,desc');
 
       // Monta o body da requisição
       const requestBody = {
         tipoResiduo: filtros.tipoResiduo || null,
         nomeResponsavel: filtros.nomeResponsavel || null,
-        dataColeta: filtros.dataColeta || null,
-        // Adicione outros filtros conforme necessário
+        dataInicio: filtros.dataInicio || null,
+        dataFim: filtros.dataFim || null,
+        local: filtros.local || null,
       };
 
       const url = `/residuos/busca/filtro?${queryParams.toString()}`;

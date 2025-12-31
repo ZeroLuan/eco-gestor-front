@@ -9,6 +9,7 @@ import {
     PontoColetaRequest,
     PontoColetaResponse
 } from './pontoColetaTypes.js';
+import { buildPaginationParams } from '../../utils/pagination.js';
 
 class PontosColetaService {
 
@@ -19,17 +20,8 @@ class PontosColetaService {
      */
     async listarTodos(params = {}) {
         try {
-            // Define valores padrão para paginação
-            const page = params.page || 0;
-            const size = params.size || 10;
-            const sort = params.sort || 'id,asc';
-
             // Monta query string no formato Spring Boot
-            const queryParams = new URLSearchParams({
-                page: page.toString(),
-                size: size.toString(),
-                sort: sort
-            });
+            const queryParams = buildPaginationParams(params);
 
             const url = `/ponto-coleta/busca/paginada?${queryParams.toString()}`;
             console.log('🔍 Buscando pontos de coleta:', url);
@@ -53,17 +45,8 @@ class PontosColetaService {
      */
     async buscarComFiltros(filtros = {}, params = {}) {
         try {
-            // Define valores padrão para paginação
-            const page = params.page || 0;
-            const size = params.size || 10;
-            const sort = params.sort || 'id,desc';
-
             // Monta query string no formato Spring Boot
-            const queryParams = new URLSearchParams({
-                page: page.toString(),
-                size: size.toString(),
-                sort: sort
-            });
+            const queryParams = buildPaginationParams(params, 'id,desc');
 
             // Monta o body da requisição no formato esperado pelo backend
             const requestBody = {

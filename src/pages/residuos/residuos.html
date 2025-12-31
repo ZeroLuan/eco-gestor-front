@@ -17,19 +17,29 @@
           <label class="form-label small">Tipo de Resíduo</label>
           <select id="filterTipo" class="form-select">
             <option value="" selected>Selecione...</option>
-            <option value="Plástico">Plástico</option>
-            <option value="Papel">Papel</option>
-            <option value="Metal">Metal</option>
-            <option value="Vidro">Vidro</option>
-            <option value="Orgânico">Orgânico</option>
-            <option value="Eletrônico">Eletrônico</option>
+            <option value="PLASTICO">Plástico</option>
+            <option value="PAPEL">Papel</option>
+            <option value="METAL">Metal</option>
+            <option value="VIDRO">Vidro</option>
+            <option value="ORGANICO">Orgânico</option>
+            <option value="ELETRONICO">Eletrônico</option>
+            <option value="MISTO">Misto</option>
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+          <label class="form-label small">Responsável</label>
+          <input
+            type="text"
+            id="filterNomeResponsavel"
+            class="form-control"
+            placeholder="Nome..."
+          />
+        </div>
+        <div class="col-md-2">
           <label class="form-label small">Período (De)</label>
           <input type="date" id="filterDataInicio" class="form-control" />
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label small">Período (Até)</label>
           <input type="date" id="filterDataFim" class="form-control" />
         </div>

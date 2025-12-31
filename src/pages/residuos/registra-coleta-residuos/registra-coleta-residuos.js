@@ -4,11 +4,15 @@
 
 import { residuosService } from "../../../services/residuos/residuosService";
 import { pontosColetaService } from "../../../services/pontosColeta/pontosColetaService";
+import { ResiduosRequest } from "../../../services/residuos/residuosTypes";
 
 // Armazena o callback global para ser usado ao salvar
 let callbackGlobal = null;
+// Armazena os dados da coleta em edição (null para criação)
+let coletaDataEdicao = null;
 
-export function abrirModalColeta(coletaId = null, callback = null) {
+export function abrirModalColeta(coletaData = null, callback = null) {
+  coletaDataEdicao = coletaData;
   callbackGlobal = callback;
 
   // Carrega o HTML do modal se ainda não estiver na página
@@ -42,10 +46,11 @@ export function abrirModalColeta(coletaId = null, callback = null) {
       const titulo = document.getElementById("tituloModal");
       const textoBotao = document.getElementById("textoBotaoSalvar");
 
-      if (coletaId) {
+      if (coletaData) {
         titulo.textContent = "Editar Coleta";
         textoBotao.textContent = "Salvar Alterações";
-        // TODO: carregar dados da coleta para edição
+        // Carrega dados da coleta para edição
+        carregarDadosParaEdicao(coletaData);
       } else {
         titulo.textContent = "Registrar Coleta";
         textoBotao.textContent = "Registrar";
@@ -143,6 +148,9 @@ function fecharModal() {
       backdrop.remove();
     }
   }
+
+  // Reseta o estado de edição
+  coletaDataEdicao = null;
 }
 
 /**
@@ -155,6 +163,44 @@ function limparFormularioColeta() {
   document.getElementById("coletaLocal").value = "";
   document.getElementById("coletaNomeResponsavel").value = "";
   document.getElementById("coletaData").value = "";
+}
+
+/**
+ * Carrega dados da coleta para edição
+ * @param {Object} coletaData - Dados da coleta
+ */
+async function carregarDadosParaEdicao(coletaData) {
+  if (!coletaData) return;
+
+  console.log("📝 Carregando dados para edição:", coletaData);
+
+  // Preenche o formulário com os dados
+  document.getElementById("coletaId").value = coletaData.id || "";
+  document.getElementById("coletaTipoResiduo").value = coletaData.tipoResiduo || "";
+  document.getElementById("coletaPeso").value = coletaData.peso || "";
+  document.getElementById("coletaNomeResponsavel").value = coletaData.nomeResponsavel || "";
+  document.getElementById("coletaData").value = coletaData.dataColeta ? coletaData.dataColeta.split('T')[0] : "";
+
+  console.log(`📝 Preenchendo formulário - Tipo: ${coletaData.tipoResiduo}, Ponto: ${coletaData.idPontoColeta}`);
+
+  // Se há tipo de resíduo, carrega os pontos de coleta correspondentes
+  if (coletaData.tipoResiduo) {
+    try {
+      console.log(`🔍 Carregando pontos de coleta para tipo: ${coletaData.tipoResiduo}`);
+      const pontos = await pontosColetaService.buscarPorTipoResiduo(coletaData.tipoResiduo);
+      console.log(`✅ ${pontos.length} pontos encontrados`);
+      await popularSelectLocal(pontos);
+      // Após popular, define o valor selecionado
+      document.getElementById("coletaLocal").value = coletaData.idPontoColeta || "";
+      console.log(`📍 Ponto selecionado: ${coletaData.idPontoColeta}`);
+    } catch (error) {
+      console.error("❌ Erro ao carregar pontos de coleta:", error);
+      await popularSelectLocal([]);
+    }
+  } else {
+    console.log("⚠️ Nenhum tipo de resíduo definido");
+    await popularSelectLocal([]);
+  }
 }
 
 /**
@@ -172,6 +218,7 @@ function popularSelectLocal(pontos) {
       select.appendChild(option);
     });
   }
+  return Promise.resolve(); // Retorna uma promise para permitir await
 }
 
 /**
@@ -195,14 +242,31 @@ export async function salvarColeta() {
     dataColeta: document.getElementById("coletaData").value,
   };
 
-  // await residuosService.criar(dados);
+  // Cria instância do ResiduosRequest para validação
+  const request = new ResiduosRequest(dados);
+
+  // Valida os dados
+  const validacao = request.validar();
+  if (!validacao.isValid) {
+    alert(`Dados inválidos: ${validacao.errors.join(', ')}`);
+    return;
+  }
 
   console.log("Dados da coleta a serem salvos:", dados);
 
   try {
-    // integração com o service de coletas
-    const response = await residuosService.criar(dados);
-    console.log("Coleta registrada:", response);
+    let response;
+    if (coletaDataEdicao) {
+      // Edição
+      response = await residuosService.atualizar(coletaDataEdicao.id, request);
+      console.log("Coleta atualizada:", response);
+      alert("Coleta atualizada com sucesso!");
+    } else {
+      // Criação
+      response = await residuosService.criar(request);
+      console.log("Coleta registrada:", response);
+      alert("Coleta registrada com sucesso!");
+    }
 
     // Fecha o modal
     fecharModal();
