@@ -167,7 +167,7 @@ function renderizarTabela(dados) {
 
 		const tr = document.createElement('tr');
 		tr.innerHTML = `
-			<td>${item.nome || item.nomePonto || 'Sem nome'}</td>
+			<td>${item.nomePonto || 'Sem nome'}</td>
 			<td><small>${enderecoTexto}</small></td>
 			<td><span class="badge bg-primary">${EnumUtils.formatarTipoResiduo(item.tipoResiduo)}</span></td>
 			<td>${materiaisHtml}</td>
@@ -191,7 +191,7 @@ function renderizarTabela(dados) {
 				carregarPontosColeta(paginacao.getPaginaAtual());
 			});
 		} else if (action === 'excluir') {
-			excluirPontoColeta(pontoId, pontoData.nome || pontoData.nomePonto);
+			excluirPontoColeta(pontoId, pontoData.nomePonto);
 		}
 	});
 }
@@ -248,10 +248,7 @@ function obterFiltrosAtivos() {
 	}
 	
 	if (endereco) {
-		// Se tiver filtro de endereço, envia como objeto
-		filtros.endereco = {
-			logradouro: endereco
-		};
+		filtros.enderecoNome = endereco;
 	}
 	
 	return filtros;

@@ -4,23 +4,23 @@
 
 import { abrirModalCadastroCooperativa } from "./cadastra-cooperativa/cadastra-cooperativa.js";
 import { cooperativaService } from "../../services/cooperativa/cooperativaService.js";
-
-let cooperativas = [];
+import { PaginacaoComponent } from '../../components/paginacao/paginacao.js';
 import { criarBotaoAcoesPadrao, adicionarEventListeners } from '../../components/common/botao-acoes/botao-acoes.js';
 
-// Exemplo de dados de teste
-const dadosExemplo = [
-	{ id: 1, nome: 'Cooperativa Verde', cnpj: '12.345.678/0001-90', responsavel: 'João Silva', telefone: '(74) 3641-1234', status: 'Ativa' },
-	{ id: 2, nome: 'CoopRecicla Irecê', cnpj: '98.765.432/0001-10', responsavel: 'Maria Santos', telefone: '(74) 3641-5678', status: 'Ativa' },
-	{ id: 3, nome: 'EcoCooperativa BA', cnpj: '11.222.333/0001-44', responsavel: 'Carlos Oliveira', telefone: '(74) 3641-9999', status: 'Pendente' },
-	{ id: 4, nome: 'Reciclar & Renovar', cnpj: '55.666.777/0001-88', responsavel: 'Ana Paula', telefone: '(74) 3641-4321', status: 'Ativa' },
-	{ id: 5, nome: 'Coop Sustentável', cnpj: '33.444.555/0001-22', responsavel: 'Pedro Costa', telefone: '(74) 3641-8765', status: 'Inativa' }
-];
+// ===========================
+// CARREGAMENTO DE DADOS DO BACKEND
+// ===========================
+
+// Array para armazenar os dados carregados do backend
+let cooperativasDados = [];
+
+// Componente de paginação reutilizável
+let paginacao = null;
 
 /**
  * Inicializa elementos e eventos imediatamente (SPA já carregou o HTML)
  */
-function inicializarCooperativas() {
+async function inicializarCooperativas() {
   const btnPesquisar = document.getElementById("btnPesquisar");
   const btnLimpar = document.getElementById("btnLimpar");
   const btnNovo = document.getElementById("btnNovo");
@@ -30,57 +30,113 @@ function inicializarCooperativas() {
     return;
   }
 
-  // Filtro simples em memória
-  btnPesquisar.addEventListener("click", aplicarFiltros);
+  // Inicializa o componente de paginação reutilizável
+  paginacao = new PaginacaoComponent({
+    containerId: 'paginacao',
+    totalRegistrosId: 'totalRegistros',
+    tamanhoPagina: 10,
+    onPageChange: (numeroPagina) => {
+      carregarCooperativas(numeroPagina);
+    }
+  });
 
-  // Limpa filtros e mostra todos os registros em memória
-  btnLimpar.addEventListener("click", async () => {
-    await limparFiltros();
+  btnPesquisar.addEventListener('click', function() {
+    aplicarFiltros();
+  });
+
+  btnLimpar.addEventListener('click', function() {
+    limparFiltros();
   });
 
   // Novo cadastro
   btnNovo.addEventListener("click", () => {
-    abrirModalCadastroCooperativa(null, async (novaCooperativa) => {
-      try {
-        const response = await cooperativaService.criar(novaCooperativa);
-        cooperativas.push(response);
-        renderizarTabela(cooperativas);
-      } catch (error) {
-        console.error("❌ Erro ao criar cooperativa:", error.message);
-      }
+    abrirModalCadastroCooperativa(null, () => {
+      // Callback após salvar - recarrega os dados do backend
+      carregarCooperativas(paginacao.getPaginaAtual());
     });
   });
 
-  // Inicializa tabela vazia
-  renderizarTabela(cooperativas);
+  // Carrega dados iniciais do backend
+  await carregarCooperativas(0);
   console.log("✅ Cooperativas inicializadas");
 }
 
 setTimeout(inicializarCooperativas, 100);
 
 /**
- * Aplica filtros em memória
+ * Carrega as cooperativas do backend
+ */
+async function carregarCooperativas(pagina = 0) {
+  try {
+    console.log(`🔄 Carregando cooperativas - Página ${pagina + 1}...`);
+    
+    // Captura os filtros ativos
+    const filtros = obterFiltrosAtivos();
+    const temFiltros = Object.keys(filtros).length > 0;
+    
+    // Se houver filtros, usa buscarComFiltros, senão usa buscarPaginado
+    let response = temFiltros
+      ? await cooperativaService.buscarComFiltros(filtros, {
+          page: pagina,
+          size: paginacao.getTamanhoPagina(),
+          sort: 'id,desc'
+        })
+      : await cooperativaService.buscarPaginado({
+          page: pagina,
+          size: paginacao.getTamanhoPagina(),
+          sort: 'nomeEmpresa,asc'
+        });
+    
+    // Se filtrou mas não encontrou nada, busca todos
+    if (temFiltros && (!response || !response.content || response.content.length === 0)) {
+      console.log('⚠️ Filtro não retornou resultados. Buscando todos...');
+      response = await cooperativaService.buscarPaginado({
+        page: 0,
+        size: paginacao.getTamanhoPagina(),
+        sort: 'id,desc'
+      });
+    }
+    
+    if (response && response.content) {
+      cooperativasDados = response.content;
+      
+      // Adapta a estrutura do Spring para o formato esperado
+      const paginaInfo = {
+        content: response.content,
+        number: response.number || 0,
+        totalPages: response.totalPages || 0,
+        totalElements: response.totalElements || 0,
+        size: response.size || 10
+      };
+      
+      // Atualiza o componente de paginação
+      paginacao.atualizar(paginaInfo);
+      
+      // Renderiza a tabela
+      renderizarTabela(cooperativasDados);
+      
+      console.log(`✅ ${cooperativasDados.length} cooperativas carregadas - Página ${paginaInfo.number + 1}/${paginaInfo.totalPages}`);
+    } else {
+      cooperativasDados = [];
+      paginacao.limpar();
+      renderizarTabela(cooperativasDados);
+      console.log('⚠️ Nenhuma cooperativa encontrada');
+    }
+  } catch (error) {
+    console.error('❌ Erro ao carregar cooperativas:', error);
+    cooperativasDados = [];
+    paginacao.limpar();
+    renderizarTabela(cooperativasDados);
+    alert('Erro ao carregar cooperativas. Por favor, tente novamente.');
+  }
+}
+
+/**
+ * Aplica filtros (recarrega dados do backend)
  */
 function aplicarFiltros() {
-  const nome =
-    document.getElementById("filterNome")?.value.trim().toLowerCase() || "";
-  const cnpj = document.getElementById("filterCnpj")?.value.trim() || "";
-  const status = document.getElementById("filterStatus")?.value || "";
-
-  const filtrados = cooperativas.filter((item) => {
-    const matchNome = nome ? item.nome.toLowerCase().includes(nome) : true;
-    const matchCnpj = cnpj ? item.cnpj.includes(cnpj) : true;
-    const matchStatus = status ? item.statusCooperativa === status : true;
-    return matchNome && matchCnpj && matchStatus;
-  });
-
-  // Se não encontrou nada com filtros, mostra todos
-  if (filtrados.length === 0) {
-    console.log('⚠️ Filtro não retornou resultados. Mostrando todos...');
-    renderizarTabela(cooperativas);
-  } else {
-    renderizarTabela(filtrados);
-  }
+  // Recarrega a primeira página com os filtros ativos
+  paginacao.voltarParaPrimeiraPagina();
 }
 
 /**
@@ -89,14 +145,12 @@ function aplicarFiltros() {
 async function limparFiltros() {
   const filterNome = document.getElementById("filterNome");
   const filterCnpj = document.getElementById("filterCnpj");
-  const filterStatus = document.getElementById("filterStatus");
 
   if (filterNome) filterNome.value = "";
   if (filterCnpj) filterCnpj.value = "";
-  if (filterStatus) filterStatus.value = "";
   
-  // Recarrega todos os registros
-  renderizarTabela(cooperativas);
+  // Recarrega todos os registros da primeira página
+  await carregarCooperativas(0);
 }
 
 /**
@@ -104,7 +158,6 @@ async function limparFiltros() {
  */
 function renderizarTabela(dados) {
   const tbody = document.querySelector("#tabelaCooperativas tbody");
-  const totalEl = document.getElementById("totalRegistros");
 
   if (!tbody) return;
   tbody.innerHTML = "";
@@ -112,38 +165,83 @@ function renderizarTabela(dados) {
   if (!dados || dados.length === 0) {
     tbody.innerHTML =
       '<tr><td colspan="6" class="text-center text-muted">Nenhum registro encontrado</td></tr>';
-    if (totalEl) totalEl.textContent = "Total de registros: 0";
     return;
   }
 
   dados.forEach((item) => {
-    const statusClass =
-      item.statusCooperativa === "ATIVA"
-        ? "success"
-        : item.statusCooperativa === "INATIVA"
-        ? "danger"
-        : "warning";
-
     const tr = document.createElement("tr");
     tr.innerHTML = `
+      <td>${item.nomeEmpresa || ""}</td>
       <td>${item.cnpj || ""}</td>
-      <td>${item.responsavel}</td>
-      <td>${item.nome}</td>
+      <td>${item.responsavel || ""}</td>
+      <td>${item.telefone || ""}</td>
       <td>
-        <span class="badge bg-${statusClass}">
-          ${item.statusCooperativa}
-        </span>
+        <span class="badge bg-secondary">-</span>
       </td>
       <td>
-        <button class="btn btn-outline-secondary btn-sm" title="Mais ações">
-          <i class="bi bi-three-dots-vertical"></i>
-        </button>
+        ${criarBotaoAcoesPadrao(item.id)}
       </td>
     `;
     tbody.appendChild(tr);
   });
 
-  if (totalEl) {
-    totalEl.textContent = `Total de registros: ${dados.length}`;
+  // Adiciona event listeners aos botões de ação
+  adicionarEventListeners(tbody, (action, id) => {
+    const cooperativaId = parseInt(id);
+    const cooperativaData = dados.find(c => c.id === cooperativaId);
+    
+    if (action === 'editar') {
+      abrirModalCadastroCooperativa(cooperativaData, () => {
+        carregarCooperativas(paginacao.getPaginaAtual());
+      });
+    } else if (action === 'excluir') {
+      excluirCooperativa(cooperativaId, cooperativaData.nomeEmpresa);
+    }
+  });
+}
+
+/**
+ * Exclui uma cooperativa
+ */
+async function excluirCooperativa(id, nome) {
+  // Confirmação antes de excluir
+  const confirmacao = confirm(`Tem certeza que deseja excluir a cooperativa "${nome}"?\n\nEsta ação não pode ser desfeita.`);
+  
+  if (!confirmacao) {
+    return;
   }
+  
+  try {
+    console.log('🗑️ Excluindo cooperativa ID:', id);
+    
+    // Chama o serviço para excluir
+    await cooperativaService.remover(id);
+    
+    console.log('✅ Cooperativa excluída com sucesso');
+    
+    // Mostra mensagem de sucesso
+    alert('Cooperativa excluída com sucesso!');
+    
+    // Recarrega a tabela
+    await carregarCooperativas(paginacao.getPaginaAtual());
+    
+  } catch (error) {
+    console.error('❌ Erro ao excluir cooperativa:', error);
+    alert(`Erro ao excluir cooperativa: ${error.message}`);
+  }
+}
+
+/**
+ * Captura os filtros ativos dos campos de input
+ */
+function obterFiltrosAtivos() {
+  const filtros = {};
+  
+  const nomeEmpresa = document.getElementById('filterNome')?.value.trim();
+  const cnpj = document.getElementById('filterCnpj')?.value.trim();
+  
+  if (nomeEmpresa) filtros.nomeEmpresa = nomeEmpresa;
+  if (cnpj) filtros.cnpj = cnpj;
+  
+  return filtros;
 }

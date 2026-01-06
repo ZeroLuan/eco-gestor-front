@@ -7,11 +7,15 @@
  */
 export class CooperativaRequest {
   constructor(data = {}) {
-    this.nome = data.nome || "";
-    this.responsavel = data.responsavel || "";
+    this.nomeEmpresa = data.nomeEmpresa || "";
+    this.nomeFantasia = data.nomeFantasia || "";
     this.cnpj = data.cnpj || "";
-    //  this.pontoColetas = data.pontoColetas || []; // Lista de PontoColetaRequest
-    this.statusCooperativa = data.statusCooperativa || "";
+    this.telefone = data.telefone || "";
+    this.email = data.email || "";
+    this.naturezaJuridica = data.naturezaJuridica || "";
+    this.cnae = data.cnae || "";
+    this.nomeResponsavel = data.nomeResponsavel || "";
+    this.enderecoId = data.enderecoId || null;
   }
 
   /**
@@ -21,11 +25,11 @@ export class CooperativaRequest {
   validar() {
     const errors = [];
 
-    if (!this.nome?.trim()) {
-      errors.push("Nome é obrigatório");
+    if (!this.nomeEmpresa?.trim()) {
+      errors.push("Nome da empresa é obrigatório");
     }
 
-    if (!this.responsavel?.trim()) {
+    if (!this.nomeResponsavel?.trim()) {
       errors.push("Responsável é obrigatório");
     }
 
@@ -33,8 +37,8 @@ export class CooperativaRequest {
       errors.push("CNPJ é obrigatório");
     }
 
-    if (!this.statusCooperativa?.trim()) {
-      errors.push("Status da cooperativa é obrigatório");
+    if (!this.enderecoId) {
+      errors.push("Endereço é obrigatório");
     }
 
     return {
@@ -48,11 +52,15 @@ export class CooperativaRequest {
    */
   toJSON() {
     return {
-      nome: this.nome,
-      responsavel: this.responsavel,
+      nomeEmpresa: this.nomeEmpresa,
+      nomeFantasia: this.nomeFantasia,
       cnpj: this.cnpj,
-      // pontoColetas: this.pontoColetas,
-      statusCooperativa: this.statusCooperativa,
+      telefone: this.telefone,
+      email: this.email,
+      naturezaJuridica: this.naturezaJuridica,
+      cnae: this.cnae,
+      nomeResponsavel: this.nomeResponsavel,
+      enderecoId: this.enderecoId,
     };
   }
 }
@@ -63,11 +71,11 @@ export class CooperativaRequest {
 export class CooperativaResponse {
   constructor(data = {}) {
     this.id = data.id || null;
-    this.nome = data.nome || "";
+    this.nomeEmpresa = data.nomeEmpresa || data.nome || "";
     this.responsavel = data.responsavel || "";
+    this.telefone = data.telefone || "";
     this.cnpj = data.cnpj || "";
-    //  this.pontoColetas = data.pontoColetas || []; // Lista de PontoColetaResponse
-    this.statusCooperativa = data.statusCooperativa || "";
+    this.endereco = data.endereco || null;
     this.dataInicio = data.dataInicio || null;
     this.dataFim = data.dataFim || null;
   }
@@ -84,11 +92,11 @@ export class CooperativaResponse {
 
     return new CooperativaResponse({
       ...apiData,
-      nome: apiData.nome || "",
+      nomeEmpresa: apiData.nomeEmpresa || apiData.nome || "",
       responsavel: apiData.responsavel || "",
+      telefone: apiData.telefone || "",
       cnpj: apiData.cnpj || "",
-      //  pontoColetas: apiData.pontoColetas || [],
-      statusCooperativa: apiData.statusCooperativa || "",
+      endereco: apiData.endereco || null,
       dataInicio: apiData.dataInicio || null,
       dataFim: apiData.dataFim || null,
     });
@@ -100,10 +108,11 @@ export class CooperativaResponse {
   toTableRow() {
     return {
       id: this.id,
-      nome: this.nome,
+      nomeEmpresa: this.nomeEmpresa,
       responsavel: this.responsavel,
+      telefone: this.telefone,
       cnpj: this.cnpj,
-      status: this.statusCooperativa,
+      endereco: this.endereco,
       dataInicio: this.dataInicio,
       dataFim: this.dataFim,
     };
@@ -115,7 +124,7 @@ export class CooperativaResponse {
  */
 export class CooperativaFiltro {
   constructor(data = {}) {
-    this.nome = data.nome || "";
+    this.nomeEmpresa = data.nomeEmpresa || data.nome || "";
     this.responsavel = data.responsavel || "";
     this.statusCooperativa = data.statusCooperativa || "";
     this.cnpj = data.cnpj || "";

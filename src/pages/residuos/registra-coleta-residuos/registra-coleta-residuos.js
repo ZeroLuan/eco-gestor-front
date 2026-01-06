@@ -39,7 +39,10 @@ export function abrirModalColeta(coletaData = null, callback = null) {
         backdrop.id = "modalBackdrop";
         document.body.appendChild(backdrop);
       } else {
-        const modal = new bootstrap.Modal(modalElement);
+        const modal = new bootstrap.Modal(modalElement, {
+          backdrop: 'static',
+          keyboard: false
+        });
         modal.show();
       }
 

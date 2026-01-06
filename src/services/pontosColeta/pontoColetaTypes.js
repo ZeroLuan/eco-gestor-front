@@ -10,6 +10,7 @@ export class PontoColetaRequest {
         this.nomePonto = data.nomePonto || '';
         this.tipoResiduo = data.tipoResiduo || '';
         this.enderecoId = data.enderecoId || null;
+        this.cooperativaId = data.cooperativaId || null;
         this.ativo = data.ativo !== undefined ? data.ativo : true;
         this.materiaisAceitos = data.materiaisAceitos || [];
     }
@@ -33,6 +34,10 @@ export class PontoColetaRequest {
             errors.push('Endereço é obrigatório');
         }
 
+        if (!this.cooperativaId) {
+            errors.push('Cooperativa é obrigatória');
+        }
+
         return {
             isValid: errors.length === 0,
             errors
@@ -47,6 +52,7 @@ export class PontoColetaRequest {
             nomePonto: this.nomePonto,
             tipoResiduo: this.tipoResiduo,
             enderecoId: this.enderecoId,
+            cooperativaId: this.cooperativaId,
             ativo: this.ativo,
             materiaisAceitos: this.materiaisAceitos
         };
@@ -59,8 +65,9 @@ export class PontoColetaRequest {
 export class PontoColetaResponse {
     constructor(data = {}) {
         this.id = data.id || null;
-        this.nome = data.nome || '';
+        this.nomePonto = data.nomePonto || '';
         this.endereco = data.endereco || null; // Objeto EnderecoResponse
+        this.cooperativa = data.cooperativa || null; // Objeto CooperativaResponse
         this.tipoResiduo = data.tipoResiduo || '';
         this.materiaisAceitos = data.materiaisAceitos || [];
         this.ativo = data.ativo !== undefined ? data.ativo : true;
@@ -79,10 +86,7 @@ export class PontoColetaResponse {
         }
         
         return new PontoColetaResponse({
-            ...apiData,
-            nome: apiData.nomePonto || apiData.nome || '',
-            // materiaisAceitos vem como array de strings do backend
-            materiaisAceitos: apiData.materiaisAceitos || []
+            ...apiData
         });
     }
 
@@ -92,7 +96,7 @@ export class PontoColetaResponse {
     toTableRow() {
         return {
             id: this.id,
-            nome: this.nome,
+            nomePonto: this.nomePonto,
             tipoResiduo: this.tipoResiduo,
             endereco: this.endereco ? this.endereco.toString() : '',
             ativo: this.ativo,
@@ -106,13 +110,13 @@ export class PontoColetaResponse {
  */
 export class PontoColetaFiltro {
     constructor(data = {}) {
-        this.nome = data.nome || '';
+        this.nomePonto = data.nomePonto || '';
         this.tipoResiduo = data.tipoResiduo || '';
-        this.endereco = data.endereco || '';
+        this.enderecoNome = data.enderecoNome || '';
         this.ativo = data.ativo;
         this.pagina = data.pagina || 0;
         this.tamanho = data.tamanho || 10;
-        this.ordenacao = data.ordenacao || 'nome';
+        this.ordenacao = data.ordenacao || 'nomePonto';
         this.direcao = data.direcao || 'ASC';
     }
 
@@ -122,9 +126,9 @@ export class PontoColetaFiltro {
     toQueryString() {
         const params = new URLSearchParams();
 
-        if (this.nome) params.append('nome', this.nome);
+        if (this.nomePonto) params.append('nomePonto', this.nomePonto);
         if (this.tipoResiduo) params.append('tipoResiduo', this.tipoResiduo);
-        if (this.endereco) params.append('endereco', this.endereco);
+        if (this.enderecoNome) params.append('enderecoNome', this.enderecoNome);
         if (this.ativo !== undefined) params.append('ativo', this.ativo);
         if (this.pagina !== undefined) params.append('pagina', this.pagina);
         if (this.tamanho !== undefined) params.append('tamanho', this.tamanho);

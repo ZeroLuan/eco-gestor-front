@@ -4,9 +4,13 @@
 
 import { cooperativaService } from "../../../services/cooperativa/cooperativaService.js";
 import { CooperativaRequest } from "../../../services/cooperativa/cooperativaTypes.js";
+import { EnderecoComponent } from '../../../components/endereco/endereco.js';
 
 // Armazena o callback global para ser usado ao salvar
 let callbackGlobal = null;
+
+// Instância do componente de endereço
+let enderecoComponent = null;
 
 /**
  * Abre o modal para cadastrar uma nova cooperativa
@@ -16,13 +20,16 @@ export function abrirModalCadastroCooperativa(callback = null) {
   callbackGlobal = callback;
 
   carregarModalCadastroCooperativa()
-    .then(() => {
+    .then(async () => {
       const modalElement = document.getElementById("modalCadastroCooperativa");
 
       if (!modalElement) {
         console.error("❌ Elemento modal não encontrado no DOM");
         return;
       }
+
+      // Reinicializa o componente de endereço toda vez que o modal abre
+      await inicializarComponenteEndereco();
 
       if (typeof bootstrap === "undefined") {
         modalElement.classList.add("show");
@@ -36,7 +43,10 @@ export function abrirModalCadastroCooperativa(callback = null) {
         backdrop.id = "modalBackdrop";
         document.body.appendChild(backdrop);
       } else {
-        const modal = new bootstrap.Modal(modalElement);
+        const modal = new bootstrap.Modal(modalElement, {
+          backdrop: 'static',
+          keyboard: false
+        });
         modal.show();
       }
 
@@ -96,8 +106,40 @@ async function carregarModalCadastroCooperativa() {
         }
       });
     }
+
+    console.log('✅ Modal de cooperativa carregado');
   } catch (error) {
     console.error("❌ Erro ao carregar modal de cooperativa:", error);
+  }
+}
+
+/**
+ * Inicializa o componente de endereço
+ */
+async function inicializarComponenteEndereco() {
+  try {
+    // Remove instância anterior se existir
+    if (enderecoComponent) {
+      enderecoComponent.limpar();
+      enderecoComponent = null;
+    }
+
+    // Cria nova instância do componente
+    enderecoComponent = new EnderecoComponent('enderecoContainerCooperativa');
+    
+    // Inicializa o componente
+    await enderecoComponent.inicializar();
+    
+    // Configura callback quando endereço for salvo
+    enderecoComponent.onSave((enderecoSalvo) => {
+      console.log('✅ Endereço validado, liberando botão de salvar:', enderecoSalvo);
+      bloquearBotaoSalvar(false); // Libera o botão de salvar
+    });
+    
+    console.log('✅ Componente de endereço inicializado com sucesso');
+  } catch (error) {
+    console.error('❌ Erro ao inicializar componente de endereço:', error);
+    throw error;
   }
 }
 
@@ -125,6 +167,30 @@ function fecharModalCooperativa() {
       backdrop.remove();
     }
   }
+
+  // Limpar componente de endereço
+  if (enderecoComponent) {
+    enderecoComponent.limpar();
+  }
+}
+
+/**
+ * Bloqueia ou desbloqueia o botão de salvar cooperativa
+ */
+function bloquearBotaoSalvar(bloquear) {
+  const btnSalvar = document.getElementById('btnSalvarCooperativa');
+  
+  if (btnSalvar) {
+    btnSalvar.disabled = bloquear;
+    
+    if (bloquear) {
+      btnSalvar.classList.add('disabled');
+      btnSalvar.title = 'Salve o endereço primeiro';
+    } else {
+      btnSalvar.classList.remove('disabled');
+      btnSalvar.title = '';
+    }
+  }
 }
 
 /**
@@ -133,11 +199,21 @@ function fecharModalCooperativa() {
 function limparFormularioCooperativa() {
   document.getElementById("cooperativaId").value = "";
   document.getElementById("cooperativaNome").value = "";
+  document.getElementById("nomeFantasia").value = "";
   document.getElementById("cooperativaCnpj").value = "";
+  document.getElementById("telefone").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("naturezaJuridica").value = "";
+  document.getElementById("cnae").value = "";
   document.getElementById("cooperativaResponsavel").value = "";
-  document.getElementById("statusCooperativa").value = "";
-  document.getElementById("dataInicio").value = "";
-  document.getElementById("dataFim").value = "";
+
+  // Limpar endereço
+  if (enderecoComponent) {
+    enderecoComponent.limpar();
+  }
+  
+  // Bloquear botão de salvar até que o endereço seja salvo
+  bloquearBotaoSalvar(true);
 }
 
 /**
@@ -145,37 +221,93 @@ function limparFormularioCooperativa() {
  */
 
 async function salvarCooperativa() {
+  const btnSalvar = document.getElementById('btnSalvarCooperativa');
+  const textoBotao = document.getElementById('textoBotaoSalvarCooperativa');
+  const textoOriginal = textoBotao ? textoBotao.textContent : 'Cadastrar';
+  
   try {
+    // Verificar se o endereço foi salvo
+    if (!enderecoComponent || !enderecoComponent.estaSalvo()) {
+      alert("⚠️ Por favor, salve o endereço antes de cadastrar a cooperativa.");
+      return;
+    }
+
+    // Desabilita o botão e mostra loading
+    if (btnSalvar) {
+      btnSalvar.disabled = true;
+      textoBotao.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...';
+    }
+
+    // PASSO 1: Persiste o endereço no banco de dados
+    console.log('📍 Passo 1: Persistindo endereço no banco...');
+    const enderecoResponse = await enderecoComponent.persistirEndereco();
+    
+    if (!enderecoResponse || !enderecoResponse.id) {
+      throw new Error('Falha ao salvar endereço. Não foi possível obter o ID.');
+    }
+    
+    const enderecoId = enderecoResponse.id;
+    console.log('✅ Endereço persistido com ID:', enderecoId);
+
+    // PASSO 2: Coleta os dados da cooperativa
     const responsavel = document
       .getElementById("cooperativaResponsavel")
       ?.value.trim();
     const nome = document.getElementById("cooperativaNome").value;
+    const nomeFantasia = document.getElementById("nomeFantasia").value;
     const cnpj = document.getElementById("cooperativaCnpj").value;
-    const status = document.getElementById("statusCooperativa")?.value; // ATIVA, VENCIDA, PENDENTE, INATIVA
-    const dataInicio = document.getElementById("dataInicio")?.value;
-    const dataFim = document.getElementById("dataFim")?.value;
+    const telefone = document.getElementById("telefone").value;
+    const email = document.getElementById("email").value;
+    const naturezaJuridica = document.getElementById("naturezaJuridica").value;
+    const cnae = document.getElementById("cnae").value;
 
+    console.log('📦 Passo 2: Dados da cooperativa coletados');
+
+    // PASSO 3: Cria o request da cooperativa
     const request = new CooperativaRequest({
-      nome,
-      responsavel,
+      nomeEmpresa: nome,
+      nomeFantasia,
+      enderecoId: enderecoId,
       cnpj,
-      statusCooperativa: status, // já vem no formato correto
-      dataInicio: dataInicio ? new Date(dataInicio).toISOString() : null,
-      dataFim: dataFim ? new Date(dataFim).toISOString() : null,
+      telefone,
+      email,
+      naturezaJuridica,
+      cnae,
+      nomeResponsavel: responsavel,
     });
 
     const validacao = request.validar();
     if (!validacao.isValid) {
       alert("⚠️ Erros: " + validacao.errors.join(", "));
+      // Reabilita o botão em caso de erro
+      if (btnSalvar) {
+        btnSalvar.disabled = false;
+        textoBotao.textContent = textoOriginal;
+      }
       return;
     }
 
+    // PASSO 4: Salva a cooperativa
+    console.log('➕ Passo 3: Criando cooperativa...');
     const response = await cooperativaService.criar(request);
+    console.log('✅ Cooperativa criada:', response);
 
+    // Fecha o modal
     fecharModalCooperativa();
-    if (callbackGlobal) callbackGlobal(response);
+    
+    // Executa callback se fornecido (para atualizar a tabela na tela principal)
+    if (callbackGlobal && typeof callbackGlobal === 'function') {
+      callbackGlobal(response);
+    }
+    
   } catch (error) {
-    console.error("❌ Erro ao salvar cooperativa:", error.message);
-    alert("Erro ao salvar cooperativa");
+    console.error("❌ Erro ao salvar cooperativa:", error);
+    alert(`Erro ao salvar: ${error.message}`);
+    
+    // Reabilita o botão em caso de erro
+    if (btnSalvar) {
+      btnSalvar.disabled = false;
+      textoBotao.textContent = textoOriginal;
+    }
   }
 }

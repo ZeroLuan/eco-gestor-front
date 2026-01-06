@@ -41,19 +41,21 @@
             />
           </div>
 
-          <!-- Responsável -->
+          <!-- Nome Fantasia -->
           <div class="mb-3">
-            <label for="cooperativaResponsavel" class="form-label">
-              Responsável <span class="text-danger">*</span>
+            <label for="nomeFantasia" class="form-label">
+              Nome Fantasia
             </label>
             <input
               type="text"
               class="form-control"
-              id="cooperativaResponsavel"
-              placeholder="Nome do responsável"
-              required
+              id="nomeFantasia"
+              placeholder="Digite o nome fantasia"
             />
           </div>
+
+          <!-- Componente de Endereço -->
+          <div id="enderecoContainerCooperativa"></div>
 
           <!-- CNPJ -->
           <div class="mb-3">
@@ -69,42 +71,70 @@
             />
           </div>
 
-          <!-- Pontos de Coleta 
+          <!-- Telefone -->
           <div class="mb-3">
-            <label class="form-label">Pontos de Coleta Associados</label>
-            <div class="border rounded p-3 bg-light" id="pontosColetaContainer">
-            
-            </div>
-          </div> -->
-
-          <div class="mb-3">
-            <label for="statusCooperativa" class="form-label">Status</label>
-            <select class="form-select" id="statusCooperativa" required>
-              <option value="">Selecione</option>
-              <option value="ATIVA">Ativa</option>
-              <option value="VENCIDA">Vencida</option>
-              <option value="PENDENTE">Pendente</option>
-              <option value="INATIVA">Inativa</option>
-            </select>
-          </div>
-
-          <!-- Data de Início -->
-          <div class="mb-3">
-            <label for="dataInicio" class="form-label">
-              Data de Início <span class="text-danger">*</span>
+            <label for="telefone" class="form-label">
+              Telefone
             </label>
             <input
-              type="datetime-local"
+              type="text"
               class="form-control"
-              id="dataInicio"
-              required
+              id="telefone"
+              placeholder="(00) 00000-0000"
             />
           </div>
 
-          <!-- Data de Fim -->
+          <!-- Email -->
           <div class="mb-3">
-            <label for="dataFim" class="form-label">Data de Encerramento</label>
-            <input type="datetime-local" class="form-control" id="dataFim" />
+            <label for="email" class="form-label">
+              Email
+            </label>
+            <input
+              type="email"
+              class="form-control"
+              id="email"
+              placeholder="email@exemplo.com"
+            />
+          </div>
+
+          <!-- Natureza Jurídica -->
+          <div class="mb-3">
+            <label for="naturezaJuridica" class="form-label">
+              Natureza Jurídica
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="naturezaJuridica"
+              placeholder="Ex: Ltda, S.A., etc."
+            />
+          </div>
+
+          <!-- CNAE -->
+          <div class="mb-3">
+            <label for="cnae" class="form-label">
+              CNAE
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="cnae"
+              placeholder="Código CNAE"
+            />
+          </div>
+
+          <!-- Responsável -->
+          <div class="mb-3">
+            <label for="cooperativaResponsavel" class="form-label">
+              Responsável <span class="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="cooperativaResponsavel"
+              placeholder="Nome do responsável"
+              required
+            />
           </div>
         </form>
       </div>

@@ -6,6 +6,7 @@ import { TIPOS_RESIDUO, ESTADOS_BRASIL, EnumUtils } from '../../../utils/constan
 import { pontosColetaService } from '../../../services/pontosColeta/pontosColetaService.js';
 import { PontoColetaRequest } from '../../../services/pontosColeta/pontoColetaTypes.js';
 import { EnderecoComponent } from '../../../components/endereco/endereco.js';
+import { cooperativaService } from '../../../services/cooperativa/cooperativaService.js';
 
 // Armazena o callback global para ser usado ao salvar
 let callbackGlobal = null;
@@ -31,6 +32,12 @@ export async function abrirModalCadastro(pontoData = null, callback = null) {
 			return;
 		}
 		
+		// Recarrega as cooperativas sempre que o modal é aberto (evita cache)
+		await carregarCooperativas();
+		
+		// Reinicializa o componente de endereço toda vez que o modal abre
+		await inicializarComponenteEndereco();
+		
 		// Verifica se Bootstrap está disponível
 		if (typeof bootstrap === 'undefined') {
 			// Fallback: abre o modal manualmente com CSS
@@ -46,7 +53,10 @@ export async function abrirModalCadastro(pontoData = null, callback = null) {
 			backdrop.id = 'modalBackdrop';
 			document.body.appendChild(backdrop);
 		} else {
-			const modal = new bootstrap.Modal(modalElement);
+			const modal = new bootstrap.Modal(modalElement, {
+				backdrop: 'static',
+				keyboard: false
+			});
 			modal.show();
 		}
 		
@@ -81,13 +91,86 @@ async function carregarModalCadastro() {
 	}
 	
 	try {
-		const response = await fetch('./src/pages/ponto-coleta/cadastra-ponto-coleta/cadastra-ponto-coleta.html');
-		
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
-		
-		const html = await response.text();
+		// HTML do modal incluído diretamente
+		const html = `
+<!-- Modal de Cadastro/Edição -->
+<div class="modal fade" id="modalCadastroPonto" tabindex="-1" aria-labelledby="modalCadastroLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-centered">
+		<div class="modal-content">
+			<!-- Cabeçalho do Modal -->
+			<div class="modal-header bg-success text-white">
+				<h5 class="modal-title" id="modalCadastroLabel">
+					<i class="bi bi-geo-alt-fill me-2"></i>
+					<span id="tituloModal">Cadastrar Ponto de Coleta</span>
+				</h5>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+			</div>
+
+			<!-- Corpo do Modal -->
+			<div class="modal-body">
+				<form id="formCadastroPonto">
+					<input type="hidden" id="pontoId" value="">
+
+					<!-- Nome do Ponto -->
+					<div class="mb-3">
+						<label for="pontoNome" class="form-label">Nome do Ponto <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" id="pontoNome" placeholder="Ex: Ecoponto Central" required>
+					</div>
+
+					<!-- Cooperativa -->
+					<div class="mb-3">
+						<label for="pontoCooperativa" class="form-label">Cooperativa <span class="text-danger">*</span></label>
+						<select id="pontoCooperativa" class="form-select" required>
+							<option value="" selected>Carregando...</option>
+						</select>
+						<small class="text-muted">Selecione a cooperativa responsável por este ponto</small>
+					</div>
+
+					<!-- Tipo de Resíduo -->
+					<div class="mb-3">
+						<label for="pontoTipoResiduo" class="form-label">Tipo de Resíduo Principal <span class="text-danger">*</span></label>
+						<select id="pontoTipoResiduo" class="form-select" required>
+							<option value="" selected>Selecione...</option>
+							<!-- Opções serão populadas dinamicamente via JavaScript -->
+						</select>
+					</div>
+
+					<!-- Materiais Aceitos -->
+					<div class="mb-3">
+						<label class="form-label">Materiais Aceitos</label>
+						<div class="border rounded p-3 bg-light" id="materiaisAceitosContainer">
+							<!-- Checkboxes serão populados dinamicamente via JavaScript -->
+						</div>
+					</div>
+
+                    <!-- Ponto Ativo -->
+					<div class="form-check mb-3">
+						<input class="form-check-input" type="checkbox" id="pontoAtivo" checked>
+						<label class="form-check-label" for="pontoAtivo">
+							Ponto Ativo
+						</label>
+					</div>
+
+					<!-- Componente de Endereço -->
+					<div id="enderecoContainer"></div>
+
+				</form>
+			</div>
+
+			<!-- Rodapé do Modal -->
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+					<i class="bi bi-x-lg me-1"></i>
+					Cancelar
+				</button>
+				<button type="button" class="btn btn-primary" id="btnSalvarPonto">
+					<i class="bi bi-check-lg me-1"></i>
+					<span id="textoBotaoSalvar">Cadastrar</span>
+				</button>
+			</div>
+		</div>
+	</div>
+</div>`;
 		
 		// Adiciona o modal ao body
 		const div = document.createElement('div');
@@ -103,9 +186,6 @@ async function carregarModalCadastro() {
 		// Popula os selects com os enums
 		popularSelects();
 		
-		// Inicializa o componente de endereço
-		await inicializarComponenteEndereco();
-		
 		// Configura o botão de fechar do modal
 		const btnsFechar = document.querySelectorAll('[data-bs-dismiss="modal"]');
 		btnsFechar.forEach(btn => {
@@ -114,18 +194,6 @@ async function carregarModalCadastro() {
 				fecharModal();
 			});
 		});
-		
-		// Configura o backdrop para fechar ao clicar fora
-		const modalElement = document.getElementById('modalCadastroPonto');
-		if (modalElement) {
-			modalElement.addEventListener('click', function(e) {
-				// Só fecha se clicou exatamente no modal (não em elementos filhos)
-				if (e.target === modalElement) {
-					e.preventDefault();
-					fecharModal();
-				}
-			});
-		}
 		
 		console.log('✅ Modal de cadastro carregado com sucesso');
 		
@@ -141,6 +209,12 @@ async function carregarModalCadastro() {
  */
 async function inicializarComponenteEndereco() {
 	try {
+		// Remove instância anterior se existir
+		if (enderecoComponent) {
+			enderecoComponent.limpar();
+			enderecoComponent = null;
+		}
+
 		// Cria nova instância do componente
 		enderecoComponent = new EnderecoComponent('enderecoContainer');
 		
@@ -200,6 +274,50 @@ function fecharModal() {
 /**
  * Popula os selects com os enums do sistema
  */
+/**
+ * Carrega as cooperativas cadastradas e popula o select
+ */
+async function carregarCooperativas() {
+	const selectCooperativa = document.getElementById('pontoCooperativa');
+	if (!selectCooperativa) {
+		console.error('❌ Select de cooperativa não encontrado');
+		return;
+	}
+	
+	try {
+		console.log('🔄 Carregando cooperativas...');
+		
+		// Busca todas as cooperativas (primeira página com tamanho grande)
+		const response = await cooperativaService.buscarPaginado({
+			page: 0,
+			size: 1000, // Busca muitas para pegar todas
+			sort: 'nomeEmpresa,asc'
+		});
+		
+		if (response && response.content) {
+			// Limpa o select
+			selectCooperativa.innerHTML = '<option value="">Selecione uma cooperativa...</option>';
+			
+			// Adiciona as cooperativas
+			response.content.forEach(cooperativa => {
+				const option = document.createElement('option');
+				option.value = cooperativa.id;
+				option.textContent = cooperativa.nomeEmpresa || cooperativa.nome;
+				selectCooperativa.appendChild(option);
+			});
+			
+			console.log(`✅ ${response.content.length} cooperativas carregadas`);
+		} else {
+			selectCooperativa.innerHTML = '<option value="">Nenhuma cooperativa cadastrada</option>';
+			console.warn('⚠️ Nenhuma cooperativa encontrada');
+		}
+	} catch (error) {
+		console.error('❌ Erro ao carregar cooperativas:', error);
+		selectCooperativa.innerHTML = '<option value="">Erro ao carregar cooperativas</option>';
+		alert('Erro ao carregar cooperativas. Por favor, tente novamente.');
+	}
+}
+
 function popularSelects() {
 	// Popula select de tipos de resíduo
 	const selectTipoResiduo = document.getElementById('pontoTipoResiduo');
@@ -251,6 +369,11 @@ async function carregarDadosPonto(pontoData) {
 	document.getElementById('pontoNome').value = pontoData.nome || pontoData.nomePonto || '';
 	document.getElementById('pontoTipoResiduo').value = pontoData.tipoResiduo || '';
 	document.getElementById('pontoAtivo').checked = pontoData.ativo !== false;
+	
+	// Seleciona a cooperativa se existir
+	if (pontoData.cooperativa && pontoData.cooperativa.id) {
+		document.getElementById('pontoCooperativa').value = pontoData.cooperativa.id;
+	}
 	
 	// Marca os checkboxes de materiais aceitos
 	if (pontoData.materiaisAceitos && Array.isArray(pontoData.materiaisAceitos)) {
@@ -346,13 +469,20 @@ export async function salvarPontoColeta() {
 		
 		// PASSO 2: Coleta os dados do ponto de coleta
 		const pontoId = document.getElementById('pontoId').value;
+		const cooperativaId = document.getElementById('pontoCooperativa').value;
+		
+		if (!cooperativaId) {
+			throw new Error('Por favor, selecione uma cooperativa.');
+		}
+		
 		const dados = {
 			id: pontoId || null,
 			nomePonto: document.getElementById('pontoNome').value,
 			tipoResiduo: document.getElementById('pontoTipoResiduo').value,
 			ativo: document.getElementById('pontoAtivo').checked,
 			materiaisAceitos: obterMateriaisAceitos(),
-			enderecoId: enderecoId // ID do endereço que acabou de ser salvo
+			enderecoId: enderecoId, // ID do endereço que acabou de ser salvo
+			cooperativaId: parseInt(cooperativaId) // ID da cooperativa selecionada
 		};
 		
 		console.log('📦 Passo 2: Dados do ponto de coleta:', dados);
