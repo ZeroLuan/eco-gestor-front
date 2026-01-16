@@ -50,6 +50,32 @@ class DashboardService {
   }
 
   /**
+   * Busca o total de pontos de coleta ativos
+   * @returns {Promise<number>} Total de pontos ativos
+   */
+  async getTotalPontosAtivos() {
+    try {
+      return await apiClient.get('/dashboard/total-pontos-ativos');
+    } catch (error) {
+      console.error('Erro ao buscar total de pontos ativos:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Busca o total de peso de resíduos coletados no mês atual
+   * @returns {Promise<number>} Total de peso em toneladas
+   */
+  async getTotalPesoMes() {
+    try {
+      return await apiClient.get('/dashboard/total-peso-mes');
+    } catch (error) {
+      console.error('Erro ao buscar total de peso do mês:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Busca alertas do sistema
    * @returns {Promise<Array>} Lista de alertas
    */

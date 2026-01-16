@@ -4,7 +4,7 @@
  */
 
 // Importa serviços (usando Axios)
-//import { dashboardService } from '../../services/dashboard/dashboardService.js';
+import { dashboardService } from '../../services/dashboard/dashboardService.js';
 
 // ===========================
 // CARREGAMENTO DE DADOS DO BACKEND
@@ -18,7 +18,7 @@ async function carregarDadosDashboard() {
         console.log('📊 Carregando dados do dashboard...');
         
         // Busca dados em paralelo do backend (com Axios!)
-        const [estatisticas, atividades, alertas] = await Promise.all([
+        const [estatisticas, atividades, alertas, totalPontosAtivos, totalPesoMes] = await Promise.all([
             dashboardService.getStatistics().catch(err => {
                 console.error('Erro ao carregar estatísticas:', err.message);
                 return null;
@@ -30,12 +30,28 @@ async function carregarDadosDashboard() {
             dashboardService.getAlertas().catch(err => {
                 console.error('Erro ao carregar alertas:', err.message);
                 return [];
+            }),
+            dashboardService.getTotalPontosAtivos().catch(err => {
+                console.error('Erro ao carregar total de pontos ativos:', err.message);
+                return null;
+            }),
+            dashboardService.getTotalPesoMes().catch(err => {
+                console.error('Erro ao carregar total de peso do mês:', err.message);
+                return null;
             })
         ]);
 
         // Atualiza a interface com os dados recebidos
         if (estatisticas) {
             atualizarEstatisticas(estatisticas);
+        }
+        
+        if (totalPesoMes !== null) {
+            atualizarTotalPesoMes(totalPesoMes);
+        }
+        
+        if (totalPontosAtivos !== null) {
+            atualizarTotalPontosAtivos(totalPontosAtivos);
         }
         
         if (atividades && atividades.length > 0) {
@@ -82,6 +98,36 @@ function atualizarEstatisticas(dados) {
         if (card) {
             card.textContent = dados.denunciasPendentes.valor;
         }
+    }
+}
+
+/**
+ * Atualiza o card com o total de peso de resíduos coletados no mês
+ */
+function atualizarTotalPesoMes(peso) {
+    console.log('🔄 Atualizando total de peso do mês:', peso);
+    const card = document.querySelector('.row.g-3.mb-4 .col-12:nth-child(1) h3');
+    console.log('🎯 Card encontrado:', card);
+    if (card) {
+        card.textContent = `${peso.toFixed(2)} ton`;
+        console.log(`✅ Total de peso do mês atualizado: ${peso} ton`);
+    } else {
+        console.error('❌ Card de resíduos coletados não encontrado no DOM');
+    }
+}
+
+/**
+ * Atualiza o card com o total de pontos de coleta ativos
+ */
+function atualizarTotalPontosAtivos(total) {
+    console.log('🔄 Atualizando total de pontos ativos:', total);
+    const card = document.querySelector('.row.g-3.mb-4 .col-12:nth-child(2) h3');
+    console.log('🎯 Card encontrado:', card);
+    if (card) {
+        card.textContent = total;
+        console.log(`✅ Total de pontos ativos atualizado: ${total}`);
+    } else {
+        console.error('❌ Card de pontos ativos não encontrado no DOM');
     }
 }
 
@@ -169,85 +215,12 @@ function formatarTempo(data) {
 }
 
 // ===========================
-// TOGGLE DA SIDEBAR (MOBILE)
+// INICIALIZAÇÃO DO DASHBOARD
 // ===========================
-function inicializarDashboard() {
-    
+export function inicializarDashboard() {
     // Carrega dados do backend usando Axios
     carregarDadosDashboard();
-    
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebar = document.getElementById('sidebar');
-    
-    // Toggle da sidebar em dispositivos móveis
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('show');
-        });
-    }
-
-    // Fechar sidebar ao clicar fora dela (mobile)
-    document.addEventListener('click', function(event) {
-        const isClickInsideSidebar = sidebar.contains(event.target);
-        const isClickOnToggle = sidebarToggle && sidebarToggle.contains(event.target);
-        
-        if (!isClickInsideSidebar && !isClickOnToggle && sidebar.classList.contains('show')) {
-            sidebar.classList.remove('show');
-        }
-    });
-
-    // Fechar sidebar ao clicar em um link do menu (mobile)
-    const navLinks = sidebar.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            if (window.innerWidth < 992) {
-                sidebar.classList.remove('show');
-            }
-        });
-    });
-
-    // Adicionar overlay quando sidebar estiver aberta (mobile)
-    const overlay = document.createElement('div');
-    overlay.className = 'sidebar-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1039;
-        display: none;
-    `;
-    document.body.appendChild(overlay);
-
-    // Mostrar/esconder overlay com a sidebar
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.attributeName === 'class') {
-                if (sidebar.classList.contains('show') && window.innerWidth < 992) {
-                    overlay.style.display = 'block';
-                } else {
-                    overlay.style.display = 'none';
-                }
-            }
-        });
-    });
-
-    observer.observe(sidebar, { attributes: true });
-
-    // Fechar sidebar ao clicar no overlay
-    overlay.addEventListener('click', function() {
-        sidebar.classList.remove('show');
-    });
-
-}
-
-// Executa quando o dashboard é carregado (seja inicialmente ou via SPA)
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', inicializarDashboard);
-} else {
-    inicializarDashboard();
+    console.log('✅ Dashboard inicializado');
 }
 
 // ===========================
@@ -398,3 +371,8 @@ window.addEventListener('resize', function() {
 // ===========================
 console.log('%c🌿 EcoGestor Dashboard v1.0', 'color: #198754; font-size: 16px; font-weight: bold;');
 console.log('%cSistema de Gestão Ambiental - Irecê, BA', 'color: #6c757d; font-size: 12px;');
+
+// ===========================
+// INICIALIZAÇÃO
+// ===========================
+inicializarDashboard();

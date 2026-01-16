@@ -21,7 +21,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 const routes = {
   'dashboard': {
     html: '/src/pages/dashboard/dashboard-content.html',
-    js: null, // JS já está carregado globalmente
+    js: '/src/pages/dashboard/dashboard.js',
     title: 'Dashboard'
   },
   'pontos-coleta': {
@@ -121,6 +121,69 @@ function updateActiveLink(pageName) {
 }
 
 /**
+ * Inicializa o controle da sidebar mobile
+ */
+function initSidebar() {
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('sidebar');
+  
+  if (!sidebarToggle || !sidebar) return;
+
+  // Toggle da sidebar em dispositivos móveis
+  sidebarToggle.addEventListener('click', function(e) {
+    e.stopPropagation();
+    sidebar.classList.toggle('show');
+  });
+
+  // Fechar sidebar ao clicar fora dela (mobile)
+  document.addEventListener('click', function(event) {
+    const isClickInsideSidebar = sidebar.contains(event.target);
+    const isClickOnToggle = sidebarToggle.contains(event.target);
+    
+    if (!isClickInsideSidebar && !isClickOnToggle && sidebar.classList.contains('show')) {
+      sidebar.classList.remove('show');
+    }
+  });
+
+  // Adicionar overlay quando sidebar estiver aberta (mobile)
+  const overlay = document.createElement('div');
+  overlay.className = 'sidebar-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1039;
+    display: none;
+  `;
+  document.body.appendChild(overlay);
+
+  // Mostrar/esconder overlay com a sidebar
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.attributeName === 'class') {
+        if (sidebar.classList.contains('show') && window.innerWidth < 992) {
+          overlay.style.display = 'block';
+        } else {
+          overlay.style.display = 'none';
+        }
+      }
+    });
+  });
+
+  observer.observe(sidebar, { attributes: true });
+
+  // Fechar sidebar ao clicar no overlay
+  overlay.addEventListener('click', function() {
+    sidebar.classList.remove('show');
+  });
+
+  console.log('✅ Sidebar inicializada');
+}
+
+/**
  * Inicializa o sistema de navegação
  */
 function initRouter() {
@@ -145,8 +208,16 @@ function initRouter() {
   console.log('✅ Router inicializado');
 }
 
+/**
+ * Inicializa quando o DOM estiver pronto
+ */
+function initApp() {
+  initRouter();
+  initSidebar();
+}
+
 // Inicializa quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', initRouter);
+document.addEventListener('DOMContentLoaded', initApp);
 
 // importa o JavaScript do dashboard (carregado por padrão)
 import './pages/dashboard/dashboard.js';
