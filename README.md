@@ -21,13 +21,14 @@ O **EcoGestor** é um sistema web moderno para gestão ambiental municipal, dese
 
 Este projeto foi desenvolvido com as seguintes tecnologias:
 
-- ⚡ **[Vite](https://vitejs.dev/)** - Build tool moderna e rápida (v7.2.2)
-- 🎨 **[Bootstrap 5](https://getbootstrap.com/)** - Framework CSS responsivo (v5.3.8)
-- 🎯 **[Bootstrap Icons](https://icons.getbootstrap.com/)** - Biblioteca de ícones (v1.13.1)
-- 🔌 **[Axios](https://axios-http.com/)** - Cliente HTTP para requisições (v1.13.2)
-- 💻 **JavaScript ES6+** - Linguagem de programação moderna
+- ⚡ **[Vite](https://vitejs.dev/)** - Build tool moderna e rápida (v7.x)
+- ⚛️ **[React](https://react.dev/)** - Biblioteca para interfaces de usuário (v19)
+- 🔷 **[TypeScript](https://www.typescriptlang.org/)** - Superset tipado de JavaScript
+- 🎨 **[Bootstrap 5](https://getbootstrap.com/)** - Framework CSS responsivo (v5.3)
+- 🎯 **[Bootstrap Icons](https://icons.getbootstrap.com/)** - Biblioteca de ícones (v1.13)
+- 🔌 **[Axios](https://axios-http.com/)** - Cliente HTTP para requisições (v1.13)
+- �️ **[React Router](https://reactrouter.com/)** - Roteamento dinâmico (v7)
 - 🎨 **CSS3** - Estilização customizada com variáveis
-- 🛣️ **SPA Router** - Roteamento personalizado para navegação dinâmica
 
 ## 📦 Estrutura do Projeto
 
@@ -41,26 +42,25 @@ eco-gestor-front/
 │   │   └── images/
 │   ├── components/           # Componentes reutilizáveis
 │   │   ├── common/          # Botões, inputs, etc
-│   │   └── js/
+│   │   └── cooperativa/     # Componentes específicos de cooperativa
 │   ├── pages/                # Páginas da aplicação SPA
-│   │   ├── dashboard/       # Dashboard principal
-│   │   ├── ponto-coleta/    # Gestão de pontos de coleta
-│   │   ├── licenca-ambiental/ # Licenças ambientais
-│   │   ├── cooperativa/     # Cooperativas
-│   │   ├── residuos/        # Resíduos
-│   │   └── relatorio/       # Relatórios
+│   │   ├── Dashboard.tsx    # Dashboard principal
+│   │   ├── PontosColeta.tsx # Gestão de pontos de coleta
+│   │   ├── Licencas.tsx     # Licenças ambientais
+│   │   ├── Cooperativas.tsx # Cooperativas
+│   │   ├── Residuos.tsx     # Resíduos
+│   │   └── Relatorios.tsx   # Relatórios
 │   ├── services/            # Serviços e integrações API
-│   │   ├── api.js
-│   │   ├── index.js
+│   │   ├── api.ts
 │   │   ├── auth/
-│   │   │   └── authService.js
-│   │   ├── dashboard/
-│   │   │   └── dashboardService.js
-│   │   └── pontosColeta/
-│   │       └── pontosColetaService.js
+│   │   │   └── authService.ts
+│   │   ├── cooperativa/
+│   │   │   └── cooperativaService.ts
+│   │   └── endereco/
+│   │       └── enderecoService.ts
 │   ├── utils/               # Funções utilitárias
-│   ├── app.css              # Estilos globais consolidados
-│   ├── main.js              # Arquivo principal com router
+│   ├── App.tsx              # Componente principal
+│   ├── main.tsx             # Ponto de entrada
 │   └── index.html           # Template base
 ├── .env                     # Variáveis de ambiente
 ├── package.json             # Dependências do projeto
