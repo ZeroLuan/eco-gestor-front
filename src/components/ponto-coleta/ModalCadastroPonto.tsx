@@ -4,6 +4,7 @@ import Endereco, { EnderecoRef } from '../Endereco';
 import { pontosColetaService, PontoColeta } from '../../services/pontosColeta/pontosColetaService';
 import { cooperativaService, Cooperativa } from '../../services/cooperativa/cooperativaService';
 import { enderecoService } from '../../services/endereco/enderecoService';
+import { toast } from 'react-toastify';
 
 interface ModalCadastroPontoProps {
     show: boolean;
@@ -95,12 +96,12 @@ const ModalCadastroPonto = ({ show, onClose, onSave, pontoData }: ModalCadastroP
 
     const handleSalvar = async () => {
         if (!enderecoRef.current?.validar()) {
-            alert('Por favor, preencha o endereço.');
+            toast.warning('Por favor, preencha o endereço.');
             return;
         }
 
         if (!nomePonto || !cooperativaId || !tipoResiduo) {
-            alert('Preencha os campos obrigatórios.');
+            toast.warning('Preencha os campos obrigatórios.');
             return;
         }
 
@@ -147,7 +148,7 @@ const ModalCadastroPonto = ({ show, onClose, onSave, pontoData }: ModalCadastroP
 
         } catch (error) {
             console.error(error);
-            alert('Erro ao salvar ponto de coleta.');
+            toast.error('Erro ao salvar ponto de coleta.');
         } finally {
             setLoading(false);
         }

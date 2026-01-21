@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Endereco, { EnderecoRef } from '../Endereco';
 import { cooperativaService, Cooperativa } from '../../services/cooperativa/cooperativaService';
 import { enderecoService } from '../../services/endereco/enderecoService';
+import { toast } from 'react-toastify';
 
 interface ModalCadastroCooperativaProps {
     show: boolean;
@@ -81,12 +82,12 @@ const ModalCadastroCooperativa = ({ show, onClose, onSave, cooperativaData }: Mo
 
     const handleSalvar = async () => {
         if (!enderecoRef.current?.validar()) {
-            alert('Por favor, preencha o endereço.');
+            toast.warning('Por favor, preencha o endereço.');
             return;
         }
 
         if (!nomeEmpresa || !cnpj || !nomeResponsavel) {
-            alert('Preencha os campos obrigatórios (*).');
+            toast.warning('Preencha os campos obrigatórios (*).');
             return;
         }
 
@@ -134,7 +135,7 @@ const ModalCadastroCooperativa = ({ show, onClose, onSave, cooperativaData }: Mo
 
         } catch (error) {
             console.error(error);
-            alert('Erro ao salvar cooperativa.');
+            toast.error('Erro ao salvar cooperativa.');
         } finally {
             setLoading(false);
         }

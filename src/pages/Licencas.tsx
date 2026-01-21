@@ -1,108 +1,135 @@
-import { useState } from 'react';
-
-// Dados de exemplo (Mock)
-const dadosIniciais = [
-    {
-        id: 1,
-        empresa: "Empresa ABC Ltda",
-        tipo: "LO",
-        numero: "001/2024",
-        emissao: "2024-01-15",
-        validade: "2027-01-15",
-        status: "Ativa",
-    },
-    {
-        id: 2,
-        empresa: "Indústria XYZ S.A.",
-        tipo: "LI",
-        numero: "002/2024",
-        emissao: "2024-03-10",
-        validade: "2026-03-10",
-        status: "Ativa",
-    },
-    {
-        id: 3,
-        empresa: "Cooperativa Verde",
-        tipo: "LP",
-        numero: "003/2023",
-        emissao: "2023-06-20",
-        validade: "2024-06-20",
-        status: "Vencida",
-    },
-    {
-        id: 4,
-        empresa: "EcoTech Solutions",
-        tipo: "LO",
-        numero: "004/2024",
-        emissao: "2024-09-05",
-        validade: "2029-09-05",
-        status: "Ativa",
-    },
-    {
-        id: 5,
-        empresa: "Reciclagem Brasil",
-        tipo: "LI",
-        numero: "005/2024",
-        emissao: "2024-11-01",
-        validade: "2025-11-01",
-        status: "Pendente",
-    },
-];
+import { useState, useEffect } from 'react';
+import { licencasService, LicencaAmbiental, LicencaAmbientalFilters } from '../services/licencas/licencasService';
+import { TIPOS_LICENCA, STATUS_LICENCA, EnumUtils } from '../utils/constants';
+import Pagination from '../components/Pagination';
+import ModalRegistraLicenca from '../components/licencas/ModalRegistraLicenca';
+import { toast } from 'react-toastify';
 
 const Licencas = () => {
-    const [licencas, setLicencas] = useState(dadosIniciais);
+    const [licencas, setLicencas] = useState<LicencaAmbiental[]>([]);
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
+    const [loading, setLoading] = useState(false);
 
     // Filtros
-    const [filtroEmpresa, setFiltroEmpresa] = useState('');
-    const [filtroStatus, setFiltroStatus] = useState('');
-    const [filtroVencimento, setFiltroVencimento] = useState('');
+    const [filtroNumero, setFiltroNumero] = useState('');
     const [filtroTipo, setFiltroTipo] = useState('');
+    const [filtroStatus, setFiltroStatus] = useState('');
+    const [filtroValidade, setFiltroValidade] = useState('');
+
+    // Modal
+    const [showModal, setShowModal] = useState(false);
+    const [modalData, setModalData] = useState<LicencaAmbiental | null>(null);
+
+    useEffect(() => {
+        carregarLicencas(page);
+    }, [page]);
+
+    const carregarLicencas = async (pagina: number) => {
+        setLoading(true);
+        try {
+            const hasFilters = filtroNumero || filtroTipo || filtroStatus || filtroValidade;
+            let response;
+
+            // Note: Backend might need datetime for validity if filter is on exact date, 
+            // but usually filters are ranges or date-only. 
+            // The provided backend code uses `LicencaAmbientalRequest` object for filter body.
+            // Assuming string/ISO format works for LocalDateTime deserialization in basic scenarios.
+
+            if (hasFilters) {
+                const filtros: LicencaAmbientalFilters = {
+                    numeroLicenca: filtroNumero || undefined,
+                    tipoLicenca: filtroTipo || undefined,
+                    statusLicenca: filtroStatus || undefined,
+                    dataValidade: filtroValidade ? `${filtroValidade}T00:00:00` : undefined // Adjust if needed
+                };
+                response = await licencasService.buscarComFiltros(filtros, { page: pagina, size: 10, sort: 'id,desc' });
+            } else {
+                response = await licencasService.listarTodos({ page: pagina, size: 10, sort: 'id,desc' });
+            }
+
+            if (response && response.content) {
+                setLicencas(response.content);
+                const pageInfo = response.page ? response.page : response;
+                setTotalPages(pageInfo.totalPages);
+                setTotalElements(pageInfo.totalElements);
+            } else {
+                setLicencas([]);
+                setTotalPages(0);
+                setTotalElements(0);
+            }
+
+        } catch (error) {
+            console.error(error);
+            setLicencas([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handlePesquisar = () => {
-        const filtrados = dadosIniciais.filter(item => {
-            const matchEmpresa = filtroEmpresa ? item.empresa.toLowerCase().includes(filtroEmpresa.toLowerCase()) : true;
-            const matchStatus = filtroStatus ? item.status === filtroStatus : true;
-            const matchVencimento = filtroVencimento ? item.validade === filtroVencimento : true;
-            const matchTipo = filtroTipo ? item.tipo === filtroTipo : true;
-            return matchEmpresa && matchStatus && matchVencimento && matchTipo;
-        });
-        setLicencas(filtrados.length > 0 ? filtrados : dadosIniciais); // Fallback logic from JS
-        if (filtrados.length === 0) alert('Filtro não retornou resultados. Mostrando todos...');
+        setPage(0);
+        carregarLicencas(0);
     };
 
     const handleLimpar = () => {
-        setFiltroEmpresa('');
-        setFiltroStatus('');
-        setFiltroVencimento('');
+        setFiltroNumero('');
         setFiltroTipo('');
-        setLicencas(dadosIniciais);
+        setFiltroStatus('');
+        setFiltroValidade('');
+        setPage(0);
+
+        setLoading(true);
+        licencasService.listarTodos({ page: 0, size: 10, sort: 'id,desc' })
+            .then(response => {
+                if (response && response.content) {
+                    setLicencas(response.content);
+                    const pageInfo = response.page ? response.page : response;
+                    setTotalPages(pageInfo.totalPages);
+                    setTotalElements(pageInfo.totalElements);
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => setLoading(false));
     };
 
     const handleNovo = () => {
-        alert('Funcionalidade de cadastro simulada.');
-        // Simple mock add
-        const nova = {
-            id: licencas.length + 1,
-            empresa: "Nova Empresa Mock",
-            tipo: "LO",
-            numero: `00${licencas.length + 1}/2024`,
-            emissao: new Date().toISOString().split('T')[0],
-            validade: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-            status: "Ativa"
-        };
-        setLicencas([...licencas, nova]);
+        setModalData(null);
+        setShowModal(true);
     };
 
-    const formatarData = (isoDate: string) => {
-        if (!isoDate) return "";
-        const parts = isoDate.split('-');
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    const handleEditar = (licenca: LicencaAmbiental) => {
+        setModalData(licenca);
+        setShowModal(true);
     };
 
-    const getStatusBadge = (status: string) => {
-        if (status === 'Ativa') return 'success';
-        if (status === 'Vencida') return 'danger';
-        return 'warning';
+    const handleExcluir = async (id: number, numero: string) => {
+        if (confirm(`Tem certeza que deseja excluir a licença "${numero}"?\n\nEsta ação não pode ser desfeita.`)) {
+            try {
+                await licencasService.remover(id);
+                toast.success('Licença excluída com sucesso!');
+                carregarLicencas(page);
+            } catch (error) {
+                toast.error('Erro ao excluir licença.');
+            }
+        }
+    };
+
+    const formatarData = (isoDate?: string) => {
+        if (!isoDate) return '';
+        const d = new Date(isoDate);
+        return d.toLocaleDateString('pt-BR');
+    };
+
+    const getStatusInfo = (status: string) => {
+        const s = EnumUtils.getByValue(STATUS_LICENCA, status);
+        return s ? s : { label: status, cor: 'secondary' };
+    };
+
+    const getTipoLabel = (tipo: string) => {
+        const t = EnumUtils.getByValue(TIPOS_LICENCA, tipo);
+        return t ? t.label : tipo;
     };
 
     return (
@@ -112,34 +139,54 @@ const Licencas = () => {
                 <h2 className="mb-0">Licenças Ambientais</h2>
             </div>
 
+            {/* Filtros */}
             <div className="card shadow-sm mb-4">
                 <div className="card-body">
                     <div className="row gy-3">
                         <div className="col-md-3">
-                            <label className="form-label small">Empresa</label>
-                            <input type="text" className="form-control" placeholder="Digite o nome..." value={filtroEmpresa} onChange={e => setFiltroEmpresa(e.target.value)} />
+                            <label className="form-label small">Nº Licença</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Digite o número..."
+                                value={filtroNumero}
+                                onChange={e => setFiltroNumero(e.target.value)}
+                            />
+                        </div>
+                        <div className="col-md-3">
+                            <label className="form-label small">Tipo</label>
+                            <select
+                                className="form-select"
+                                value={filtroTipo}
+                                onChange={e => setFiltroTipo(e.target.value)}
+                            >
+                                <option value="">Selecione...</option>
+                                {EnumUtils.toSelectOptions(TIPOS_LICENCA).map((t: any) => (
+                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="col-md-3">
                             <label className="form-label small">Status</label>
-                            <select className="form-select" value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
+                            <select
+                                className="form-select"
+                                value={filtroStatus}
+                                onChange={e => setFiltroStatus(e.target.value)}
+                            >
                                 <option value="">Selecione...</option>
-                                <option value="Ativa">Ativa</option>
-                                <option value="Vencida">Vencida</option>
-                                <option value="Pendente">Pendente</option>
+                                {EnumUtils.toSelectOptions(STATUS_LICENCA).map((s: any) => (
+                                    <option key={s.value} value={s.value}>{s.label}</option>
+                                ))}
                             </select>
                         </div>
                         <div className="col-md-3">
                             <label className="form-label small">Data Vencimento</label>
-                            <input type="date" className="form-control" value={filtroVencimento} onChange={e => setFiltroVencimento(e.target.value)} />
-                        </div>
-                        <div className="col-md-3">
-                            <label className="form-label small">Tipo</label>
-                            <select className="form-select" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}>
-                                <option value="">Selecione...</option>
-                                <option value="LP">LP - Licença Prévia</option>
-                                <option value="LI">LI - Licença de Instalação</option>
-                                <option value="LO">LO - Licença de Operação</option>
-                            </select>
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={filtroValidade}
+                                onChange={e => setFiltroValidade(e.target.value)}
+                            />
                         </div>
                     </div>
 
@@ -159,39 +206,51 @@ const Licencas = () => {
                 </div>
             </div>
 
+            {/* Tabela */}
             <div className="card shadow-sm mb-3">
                 <div className="card-body">
                     <div className="table-responsive">
                         <table className="table table-striped table-hover align-middle">
                             <thead>
                                 <tr>
-                                    <th scope="col">Empresa</th>
-                                    <th scope="col">Tipo</th>
                                     <th scope="col">Nº Licença</th>
+                                    <th scope="col">Tipo</th>
                                     <th scope="col">Data Emissão</th>
                                     <th scope="col">Validade</th>
                                     <th scope="col">Status</th>
-                                    <th scope="col">Ações</th>
+                                    <th scope="col" style={{ width: '100px' }}>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {licencas.length === 0 ? (
-                                    <tr><td colSpan={7} className="text-center text-muted">Nenhum registro encontrado</td></tr>
+                                {loading ? (
+                                    <tr><td colSpan={6} className="text-center">Carregando...</td></tr>
+                                ) : licencas.length === 0 ? (
+                                    <tr><td colSpan={6} className="text-center text-muted">Nenhum registro encontrado</td></tr>
                                 ) : (
-                                    licencas.map(item => (
-                                        <tr key={item.id}>
-                                            <td>{item.empresa}</td>
-                                            <td><span className="badge bg-info">{item.tipo}</span></td>
-                                            <td>{item.numero}</td>
-                                            <td>{formatarData(item.emissao)}</td>
-                                            <td>{formatarData(item.validade)}</td>
-                                            <td><span className={`badge bg-${getStatusBadge(item.status)}`}>{item.status}</span></td>
-                                            <td>
-                                                <button className="btn btn-sm btn-outline-primary me-1" onClick={() => alert(`Editar ID: ${item.id}`)}><i className="bi bi-pencil"></i></button>
-                                                <button className="btn btn-sm btn-outline-danger" onClick={() => alert(`Excluir ID: ${item.id}`)}><i className="bi bi-trash"></i></button>
-                                            </td>
-                                        </tr>
-                                    ))
+                                    licencas.map(item => {
+                                        const statusInfo = getStatusInfo(item.statusLicenca);
+                                        return (
+                                            <tr key={item.id}>
+                                                <td>{item.numeroLicenca}</td>
+                                                <td><span className="badge bg-secondary">{getTipoLabel(item.tipoLicenca)}</span></td>
+                                                <td>{formatarData(item.dataEmissao)}</td>
+                                                <td>{formatarData(item.dataValidade)}</td>
+                                                <td>
+                                                    <span className={`badge bg-${statusInfo.cor}`}>
+                                                        {statusInfo.label}
+                                                    </span>
+                                                </td>
+                                                <td className="text-nowrap">
+                                                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => handleEditar(item)}>
+                                                        <i className="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleExcluir(item.id!, item.numeroLicenca)}>
+                                                        <i className="bi bi-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
@@ -199,16 +258,22 @@ const Licencas = () => {
                 </div>
             </div>
 
+            {/* Paginação */}
             <div className="d-flex align-items-center justify-content-between mb-4">
-                <div className="text-muted">Total de registros: {licencas.length}</div>
-                <nav>
-                    <ul className="pagination justify-content-end mb-0">
-                        <li className="page-item disabled"><a className="page-link" href="#">Anterior</a></li>
-                        <li className="page-item active"><a className="page-link" href="#">1</a></li>
-                        <li className="page-item"><a className="page-link" href="#">Próxima</a></li>
-                    </ul>
-                </nav>
+                <div className="text-muted">Total de registros: {totalElements}</div>
+                <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                />
             </div>
+
+            <ModalRegistraLicenca
+                show={showModal}
+                onClose={() => setShowModal(false)}
+                onSave={() => carregarLicencas(page)}
+                licencaData={modalData}
+            />
         </div>
     );
 };

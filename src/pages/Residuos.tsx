@@ -3,6 +3,7 @@ import { residuosService, Residuo, ResiduosFilters } from '../services/residuos/
 import { TIPOS_RESIDUO, EnumUtils } from '../utils/constants';
 import Pagination from '../components/Pagination';
 import ModalRegistraResiduo from '../components/residuos/ModalRegistraResiduo';
+import { toast } from 'react-toastify';
 
 const Residuos = () => {
     const [residuos, setResiduos] = useState<Residuo[]>([]);
@@ -105,7 +106,7 @@ const Residuos = () => {
             })
             .catch(err => {
                 console.error(err);
-                alert('Erro ao carregar dados do resíduo.');
+                toast.error('Erro ao carregar dados do resíduo.');
             })
             .finally(() => setLoading(false));
     };
@@ -114,10 +115,10 @@ const Residuos = () => {
         if (confirm('Tem certeza que deseja excluir este registro?\n\nEsta ação não pode ser desfeita.')) {
             try {
                 await residuosService.remover(id);
-                alert('Resíduo excluído com sucesso!');
+                toast.success('Resíduo excluído com sucesso!');
                 carregarResiduos(page);
             } catch (error) {
-                alert('Erro ao excluir resíduo.');
+                toast.error('Erro ao excluir resíduo.');
             }
         }
     };

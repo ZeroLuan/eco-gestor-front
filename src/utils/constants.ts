@@ -43,6 +43,19 @@ export const STATUS_PONTO_COLETA = {
     INATIVO: { value: false, label: "Inativo" },
 };
 
+export const TIPOS_LICENCA = {
+    LP: { value: "LP", label: "Licença Prévia (LP)" },
+    LI: { value: "LI", label: "Licença de Instalação (LI)" },
+    L0: { value: "L0", label: "Licença de Operação (L0)" },
+};
+
+export const STATUS_LICENCA = {
+    ATIVA: { value: "ATIVA", label: "Ativa", cor: "success" },
+    VENCIDA: { value: "VENCIDA", label: "Vencida", cor: "danger" },
+    PENDENTE: { value: "PENDENTE", label: "Pendente", cor: "warning" },
+    INATIVA: { value: "INATIVA", label: "Inativa", cor: "secondary" },
+};
+
 export class EnumUtils {
     static toSelectOptions(enumObj: any) {
         return Object.values(enumObj);

@@ -3,6 +3,7 @@ import { pontosColetaService, PontoColeta, PontoColetaFilters } from '../service
 import { TIPOS_RESIDUO, EnumUtils } from '../utils/constants';
 import Pagination from '../components/Pagination';
 import ModalCadastroPonto from '../components/ponto-coleta/ModalCadastroPonto';
+import { toast } from 'react-toastify';
 
 const PontosColeta = () => {
     const [pontos, setPontos] = useState<PontoColeta[]>([]);
@@ -44,8 +45,10 @@ const PontosColeta = () => {
 
             if (response && response.content) {
                 setPontos(response.content);
-                setTotalPages(response.totalPages);
-                setTotalElements(response.totalElements);
+                // Check if pagination info is in 'page' wrapper (standard) or partial (legacy/flat)
+                const pageInfo = response.page ? response.page : response;
+                setTotalPages(pageInfo.totalPages);
+                setTotalElements(pageInfo.totalElements);
             } else {
                 setPontos([]);
                 setTotalPages(0);
@@ -78,8 +81,9 @@ const PontosColeta = () => {
             .then(response => {
                 if (response && response.content) {
                     setPontos(response.content);
-                    setTotalPages(response.totalPages);
-                    setTotalElements(response.totalElements);
+                    const pageInfo = response.page ? response.page : response;
+                    setTotalPages(pageInfo.totalPages);
+                    setTotalElements(pageInfo.totalElements);
                 }
             })
             .catch(err => console.error(err))
@@ -100,10 +104,10 @@ const PontosColeta = () => {
         if (confirm(`Tem certeza que deseja excluir o ponto de coleta "${nome}"?\n\nEsta ação não pode ser desfeita.`)) {
             try {
                 await pontosColetaService.remover(id);
-                alert('Ponto de coleta excluído com sucesso!');
+                toast.success('Ponto de coleta excluído com sucesso!');
                 carregarPontos(page);
             } catch (error) {
-                alert('Erro ao excluir ponto de coleta.');
+                toast.error('Erro ao excluir ponto de coleta.');
             }
         }
     };
@@ -191,7 +195,7 @@ const PontosColeta = () => {
                                     <th scope="col">Tipo de Resíduo</th>
                                     <th scope="col">Materiais Aceitos</th>
                                     <th scope="col">Ponto Ativo</th>
-                                    <th scope="col">Ações</th>
+                                    <th scope="col" style={{ width: '100px' }}>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -224,7 +228,7 @@ const PontosColeta = () => {
                                             <td className="text-center">
                                                 <input type="checkbox" className="form-check-input" checked={ponto.ativo} disabled readOnly />
                                             </td>
-                                            <td>
+                                            <td className="text-nowrap">
                                                 <button className="btn btn-sm btn-outline-primary me-1" onClick={() => handleEditar(ponto)}>
                                                     <i className="bi bi-pencil"></i>
                                                 </button>

@@ -41,6 +41,12 @@ export interface PaginacaoResponse<T> {
     totalPages: number;
     totalElements: number;
     size: number;
+    page?: {
+        size: number;
+        totalElements: number;
+        totalPages: number;
+        number: number;
+    };
 }
 
 class CooperativaService {
@@ -54,6 +60,15 @@ class CooperativaService {
         } catch (error) {
             console.error("Erro ao buscar cooperativas paginadas:", error);
             throw error;
+        }
+    }
+
+    async listarListaCompleta(): Promise<Cooperativa[]> {
+        try {
+            return await apiClient.get<Cooperativa[]>('/cooperativas/listar-todas');
+        } catch (error) {
+            console.error("Erro ao listar todas as cooperativas:", error);
+            return [];
         }
     }
 

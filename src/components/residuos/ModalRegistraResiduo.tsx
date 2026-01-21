@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { residuosService, Residuo } from '../../services/residuos/residuosService';
 import { pontosColetaService, PontoColeta } from '../../services/pontosColeta/pontosColetaService';
 import { TIPOS_RESIDUO, EnumUtils } from '../../utils/constants';
+import { toast } from 'react-toastify';
 
 interface ModalRegistraResiduoProps {
     show: boolean;
@@ -82,7 +83,7 @@ const ModalRegistraResiduo = ({ show, onClose, onSave, residuoData }: ModalRegis
 
     const handleSalvar = async () => {
         if (!tipoResiduo || !peso || !idPontoColeta || !nomeResponsavel || !dataColeta) {
-            alert('Preencha todos os campos obrigatórios (*).');
+            toast.warning('Preencha todos os campos obrigatórios (*).');
             return;
         }
 
@@ -108,7 +109,7 @@ const ModalRegistraResiduo = ({ show, onClose, onSave, residuoData }: ModalRegis
 
         } catch (error) {
             console.error(error);
-            alert('Erro ao salvar registro de coleta.');
+            toast.error('Erro ao salvar registro de coleta.');
         } finally {
             setLoading(false);
         }

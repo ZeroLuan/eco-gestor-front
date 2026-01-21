@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { cooperativaService, Cooperativa, CooperativaFilters } from '../services/cooperativa/cooperativaService';
 import Pagination from '../components/Pagination';
 import ModalCadastroCooperativa from '../components/cooperativa/ModalCadastroCooperativa';
+import { toast } from 'react-toastify';
 
 const Cooperativas = () => {
     const [cooperativas, setCooperativas] = useState<Cooperativa[]>([]);
@@ -41,8 +42,10 @@ const Cooperativas = () => {
 
             if (response && response.content) {
                 setCooperativas(response.content);
-                setTotalPages(response.totalPages);
-                setTotalElements(response.totalElements);
+                // Check if pagination info is in 'page' wrapper (standard) or partial (legacy/flat)
+                const pageInfo = response.page ? response.page : response;
+                setTotalPages(pageInfo.totalPages);
+                setTotalElements(pageInfo.totalElements);
             } else {
                 setCooperativas([]);
                 setTotalPages(0);
@@ -73,8 +76,9 @@ const Cooperativas = () => {
             .then(response => {
                 if (response && response.content) {
                     setCooperativas(response.content);
-                    setTotalPages(response.totalPages);
-                    setTotalElements(response.totalElements);
+                    const pageInfo = response.page ? response.page : response;
+                    setTotalPages(pageInfo.totalPages);
+                    setTotalElements(pageInfo.totalElements);
                 }
             })
             .catch(err => console.error(err))
@@ -95,10 +99,10 @@ const Cooperativas = () => {
         if (confirm(`Tem certeza que deseja excluir a cooperativa "${nome}"?\n\nEsta ação não pode ser desfeita.`)) {
             try {
                 await cooperativaService.remover(id);
-                alert('Cooperativa excluída com sucesso!');
+                toast.success('Cooperativa excluída com sucesso!');
                 carregarCooperativas(page);
             } catch (error) {
-                alert('Erro ao excluir cooperativa.');
+                toast.error('Erro ao excluir cooperativa.');
             }
         }
     };
@@ -177,7 +181,7 @@ const Cooperativas = () => {
                                     <th scope="col">Responsável</th>
                                     <th scope="col">Telefone</th>
                                     <th scope="col">Status</th>
-                                    <th scope="col">Ações</th>
+                                    <th scope="col" style={{ width: '100px' }}>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -199,7 +203,7 @@ const Cooperativas = () => {
                                                     <span className="badge bg-danger">Inativa</span>
                                                 )}
                                             </td>
-                                            <td>
+                                            <td className="text-nowrap">
                                                 <button className="btn btn-sm btn-outline-primary me-1" onClick={() => handleEditar(cooperativa)}>
                                                     <i className="bi bi-pencil"></i>
                                                 </button>
