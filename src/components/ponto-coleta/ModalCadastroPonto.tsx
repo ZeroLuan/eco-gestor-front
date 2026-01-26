@@ -75,8 +75,9 @@ const ModalCadastroPonto = ({ show, onClose, onSave, pontoData }: ModalCadastroP
     const carregarCooperativas = async () => {
         setLoadingCooperativas(true);
         try {
-            const response = await cooperativaService.buscarPaginado({ page: 0, size: 1000 });
-            setCooperativas(response.content || []);
+            const response = await cooperativaService.listarListaCompleta();
+            const data = Array.isArray(response) ? response : (response as any).content || [];
+            setCooperativas(data);
         } catch (error) {
             console.error(error);
         } finally {
@@ -191,7 +192,7 @@ const ModalCadastroPonto = ({ show, onClose, onSave, pontoData }: ModalCadastroP
                                         <option value="">Selecione...</option>
                                         {cooperativas.map(coop => (
                                             <option key={coop.id} value={coop.id}>
-                                                {coop.nomeEmpresa}
+                                                {coop.nomeEmpresa || coop.nome}
                                             </option>
                                         ))}
                                     </select>

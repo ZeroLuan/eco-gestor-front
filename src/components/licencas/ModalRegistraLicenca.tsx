@@ -34,7 +34,10 @@ const ModalRegistraLicenca = ({ show, onClose, onSave, licencaData }: ModalRegis
         if (show) {
             // Load cooperatives
             cooperativaService.listarListaCompleta()
-                .then(data => setCooperativas(data))
+                .then(data => {
+                    const normalizedData = Array.isArray(data) ? data : (data as any).content || [];
+                    setCooperativas(normalizedData);
+                })
                 .catch(err => console.error("Erro ao carregar cooperativas", err));
 
             setFiltroCooperativa('');
