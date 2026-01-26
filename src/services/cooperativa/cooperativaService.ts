@@ -33,6 +33,8 @@ export interface Cooperativa {
 export interface CooperativaFilters {
     nomeEmpresa?: string;
     cnpj?: string;
+    telefone?: string;
+    statusCooperativa?: boolean | string;
 }
 
 export interface PaginacaoResponse<T> {

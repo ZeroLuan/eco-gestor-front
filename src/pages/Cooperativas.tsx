@@ -3,6 +3,7 @@ import { cooperativaService, Cooperativa, CooperativaFilters } from '../services
 import Pagination from '../components/Pagination';
 import ModalCadastroCooperativa from '../components/cooperativa/ModalCadastroCooperativa';
 import { toast } from 'react-toastify';
+import { formatarCNPJ, formatarTelefone, apenasNumeros } from '../utils/formatters';
 
 const Cooperativas = () => {
     const [cooperativas, setCooperativas] = useState<Cooperativa[]>([]);
@@ -15,6 +16,7 @@ const Cooperativas = () => {
     const [filtroNome, setFiltroNome] = useState('');
     const [filtroCnpj, setFiltroCnpj] = useState('');
     const [filtroStatus, setFiltroStatus] = useState('');
+    const [filtroTelefone, setFiltroTelefone] = useState('');
 
     // Modal
     const [showModal, setShowModal] = useState(false);
@@ -27,13 +29,15 @@ const Cooperativas = () => {
     const carregarCooperativas = async (pagina: number) => {
         setLoading(true);
         try {
-            const hasFilters = filtroNome || filtroCnpj;
+            const hasFilters = filtroNome || filtroCnpj || filtroStatus || filtroTelefone;
             let response;
 
             if (hasFilters) {
                 const filtros: CooperativaFilters = {
                     nomeEmpresa: filtroNome || undefined,
-                    cnpj: filtroCnpj || undefined
+                    cnpj: filtroCnpj ? apenasNumeros(filtroCnpj) : undefined,
+                    telefone: filtroTelefone ? apenasNumeros(filtroTelefone) : undefined,
+                    statusCooperativa: filtroStatus === 'Ativa' ? true : filtroStatus === 'Inativa' ? false : undefined
                 };
                 response = await cooperativaService.buscarComFiltros(filtros, { page: pagina, size: 10, sort: 'id,desc' });
             } else {
@@ -69,6 +73,7 @@ const Cooperativas = () => {
         setFiltroNome('');
         setFiltroCnpj('');
         setFiltroStatus('');
+        setFiltroTelefone('');
         setPage(0);
 
         setLoading(true);
@@ -135,10 +140,10 @@ const Cooperativas = () => {
                                 className="form-control"
                                 placeholder="00.000.000/0000-00"
                                 value={filtroCnpj}
-                                onChange={e => setFiltroCnpj(e.target.value)}
+                                onChange={e => setFiltroCnpj(formatarCNPJ(e.target.value))}
                             />
                         </div>
-                        <div className="col-md-4">
+                        <div className="col-md-3">
                             <label className="form-label small">Status</label>
                             <select
                                 className="form-select"
@@ -148,8 +153,17 @@ const Cooperativas = () => {
                                 <option value="">Selecione...</option>
                                 <option value="Ativa">Ativa</option>
                                 <option value="Inativa">Inativa</option>
-                                <option value="Pendente">Pendente</option>
                             </select>
+                        </div>
+                        <div className="col-md-3">
+                            <label className="form-label small">Telefone</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="(00) 00000-0000"
+                                value={filtroTelefone}
+                                onChange={e => setFiltroTelefone(formatarTelefone(e.target.value))}
+                            />
                         </div>
                     </div>
                     <div className="mt-3 d-flex justify-content-between">

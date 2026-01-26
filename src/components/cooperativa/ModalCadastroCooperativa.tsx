@@ -3,6 +3,7 @@ import Endereco, { EnderecoRef } from '../Endereco';
 import { cooperativaService, Cooperativa } from '../../services/cooperativa/cooperativaService';
 import { enderecoService } from '../../services/endereco/enderecoService';
 import { toast } from 'react-toastify';
+import { formatarCNPJ, formatarTelefone, formatarCNAE } from '../../utils/formatters';
 
 interface ModalCadastroCooperativaProps {
     show: boolean;
@@ -39,7 +40,7 @@ const ModalCadastroCooperativa = ({ show, onClose, onSave, cooperativaData }: Mo
 
     useEffect(() => {
         if (show && cooperativaData) {
-            setNomeEmpresa(cooperativaData.nomeEmpresa);
+            setNomeEmpresa(cooperativaData.nomeEmpresa || cooperativaData.nome || '');
             setNomeFantasia(cooperativaData.nomeFantasia || '');
             setCnpj(cooperativaData.cnpj);
             setTelefone(cooperativaData.telefone || '');
@@ -49,7 +50,7 @@ const ModalCadastroCooperativa = ({ show, onClose, onSave, cooperativaData }: Mo
             // Prioritize nomeResponsavel, fallback to responsavel from API
             setNomeResponsavel(cooperativaData.nomeResponsavel || cooperativaData.responsavel || '');
             // Set status, defaulting to true if undefined (though existing should have it, new defaults to true)
-            setStatusCooperativa(cooperativaData.statusCooperativa !== undefined ? cooperativaData.statusCooperativa : true);
+            setStatusCooperativa(cooperativaData.statusCooperativa !== undefined ? cooperativaData.statusCooperativa : (cooperativaData.ativo !== undefined ? cooperativaData.ativo : true));
 
             // Load address after render
             setTimeout(() => {
@@ -188,7 +189,7 @@ const ModalCadastroCooperativa = ({ show, onClose, onSave, cooperativaData }: Mo
                                         type="text"
                                         className="form-control"
                                         value={cnpj}
-                                        onChange={e => setCnpj(e.target.value)}
+                                        onChange={e => setCnpj(formatarCNPJ(e.target.value))}
                                         placeholder="00.000.000/0000-00"
                                         required
                                     />
@@ -200,7 +201,7 @@ const ModalCadastroCooperativa = ({ show, onClose, onSave, cooperativaData }: Mo
                                         type="text"
                                         className="form-control"
                                         value={telefone}
-                                        onChange={e => setTelefone(e.target.value)}
+                                        onChange={e => setTelefone(formatarTelefone(e.target.value))}
                                         placeholder="(00) 00000-0000"
                                     />
                                 </div>
@@ -233,7 +234,7 @@ const ModalCadastroCooperativa = ({ show, onClose, onSave, cooperativaData }: Mo
                                         type="text"
                                         className="form-control"
                                         value={cnae}
-                                        onChange={e => setCnae(e.target.value)}
+                                        onChange={e => setCnae(formatarCNAE(e.target.value))}
                                         placeholder="Código CNAE"
                                     />
                                 </div>
