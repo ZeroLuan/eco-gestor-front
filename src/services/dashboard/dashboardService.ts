@@ -66,6 +66,15 @@ class DashboardService {
         }
     }
 
+    async getTotalLicencasAtivas(): Promise<number> {
+        try {
+            return await apiClient.get<number>('/licenca-ambiental/buscar/total-licencas-ativas');
+        } catch (error) {
+            console.error('Erro ao buscar total de licenças ativas:', error);
+            throw error;
+        }
+    }
+
     async getTotalPesoMes(): Promise<number> {
         try {
             return await apiClient.get<number>('/dashboard/total-peso-mes');

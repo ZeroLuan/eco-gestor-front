@@ -33,22 +33,33 @@ const ModalRegistraResiduo = ({ show, onClose, onSave, residuoData }: ModalRegis
     }, [show]);
 
     useEffect(() => {
-        if (show) {
-            if (residuoData) {
-                setTipoResiduo(residuoData.tipoResiduo || '');
-                setPeso(residuoData.peso ? residuoData.peso.toString() : '');
-                setIdPontoColeta(residuoData.idPontoColeta ? residuoData.idPontoColeta.toString() : '');
-                setNomeResponsavel(residuoData.nomeResponsavel || residuoData.responsavel || '');
-                setDataColeta(residuoData.dataColeta ? residuoData.dataColeta.split('T')[0] : '');
+        const inicializar = async () => {
+            if (show) {
+                if (residuoData) {
+                    const tipo = residuoData.tipoResiduo || '';
+                    setTipoResiduo(tipo);
+                    setPeso(residuoData.peso ? residuoData.peso.toString() : '');
 
-                // If type is present, load points
-                if (residuoData.tipoResiduo) {
-                    carregarPontos(residuoData.tipoResiduo);
+                    // Handle both nomeResponsavel and responsavel
+                    setNomeResponsavel(residuoData.nomeResponsavel || residuoData.responsavel || '');
+                    setDataColeta(residuoData.dataColeta ? residuoData.dataColeta.split('T')[0] : (residuoData.dataInicio ? residuoData.dataInicio.split('T')[0] : ''));
+
+                    // If type is present, load points FIRST then set ID
+                    if (tipo) {
+                        await carregarPontos(tipo);
+                        // Check multiple common field names from backend
+                        const id = residuoData.idPontoColeta || (residuoData as any).pontoColetaId || (residuoData as any).pontoColeta?.id;
+                        if (id) {
+                            setIdPontoColeta(id.toString());
+                        }
+                    }
+                } else {
+                    limparFormulario();
                 }
-            } else {
-                limparFormulario();
             }
-        }
+        };
+
+        inicializar();
     }, [show, residuoData]);
 
     const limparFormulario = () => {
@@ -71,13 +82,17 @@ const ModalRegistraResiduo = ({ show, onClose, onSave, residuoData }: ModalRegis
         }
     };
 
-    const carregarPontos = async (tipo: string) => {
+    const carregarPontos = async (tipo: string): Promise<PontoColeta[]> => {
         try {
             const pontos = await pontosColetaService.buscarPorTipoResiduo(tipo);
-            setPontosLocais(pontos);
+            // Handle both paginated and array responses
+            const data = Array.isArray(pontos) ? pontos : (pontos as any).content || [];
+            setPontosLocais(data);
+            return data;
         } catch (error) {
             console.error(error);
             setPontosLocais([]);
+            return [];
         }
     };
 

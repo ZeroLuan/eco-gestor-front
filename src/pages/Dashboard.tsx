@@ -7,6 +7,7 @@ const Dashboard = () => {
     const [alertas, setAlertas] = useState<Alerta[]>([]);
     const [totalPesoMes, setTotalPesoMes] = useState<number | null>(null);
     const [totalPontosAtivos, setTotalPontosAtivos] = useState<number | null>(null);
+    const [totalLicencasAtivas, setTotalLicencasAtivas] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -17,12 +18,13 @@ const Dashboard = () => {
         setLoading(true);
         try {
             console.log('📊 Carregando dados do dashboard...');
-            const [stats, activities, alerts, points, weight] = await Promise.all([
+            const [stats, activities, alerts, points, weight, licenses] = await Promise.all([
                 dashboardService.getStatistics().catch(err => { console.error(err); return null; }),
                 dashboardService.getAtividadesRecentes(4).catch(err => { console.error(err); return []; }),
                 dashboardService.getAlertas().catch(err => { console.error(err); return []; }),
                 dashboardService.getTotalPontosAtivos().catch(err => { console.error(err); return null; }),
-                dashboardService.getTotalPesoMes().catch(err => { console.error(err); return null; })
+                dashboardService.getTotalPesoMes().catch(err => { console.error(err); return null; }),
+                dashboardService.getTotalLicencasAtivas().catch(err => { console.error(err); return null; })
             ]);
 
             if (stats) setStatistics(stats);
@@ -30,6 +32,7 @@ const Dashboard = () => {
             if (alerts) setAlertas(alerts);
             if (points !== null) setTotalPontosAtivos(points);
             if (weight !== null) setTotalPesoMes(weight);
+            if (licenses !== null) setTotalLicencasAtivas(licenses);
         } catch (error) {
             console.error('Erro ao carregar dashboard', error);
         } finally {
@@ -110,7 +113,7 @@ const Dashboard = () => {
                     <div className="card shadow-sm p-3 h-100">
                         <h6 className="text-muted mb-3">Licenças Ativas</h6>
                         <h3 className="fw-bold mb-2">
-                            {statistics?.licencasAtivas?.valor ?? (loading ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : 0)}
+                            {totalLicencasAtivas !== null ? totalLicencasAtivas : (statistics?.licencasAtivas?.valor ?? (loading ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : 0))}
                         </h3>
                         <p className="text-success small mb-0">
                             <i className="bi bi-check-circle"></i> Válidas e regulares

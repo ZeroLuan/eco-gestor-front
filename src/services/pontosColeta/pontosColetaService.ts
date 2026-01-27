@@ -74,7 +74,7 @@ class PontosColetaService {
 
     async buscarPorTipoResiduo(tipo: string): Promise<PontoColeta[]> {
         try {
-            return await apiClient.get<PontoColeta[]>(`/ponto-coleta/buscar-por-tipo/${tipo}`);
+            return await apiClient.get<PontoColeta[]>(`/ponto-coleta/busca/tipo-residuo/${tipo}`);
         } catch (error) {
             console.error('Erro ao buscar pontos por tipo:', error);
             return [];

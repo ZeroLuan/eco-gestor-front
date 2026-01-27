@@ -40,7 +40,7 @@ class ResiduosService {
     }
 
     async criar(dados: Residuo): Promise<Residuo> {
-        return await apiClient.post('/residuos/registrar', dados);
+        return await apiClient.post('/residuos/criar', dados);
     }
 
     async atualizar(id: number, dados: Residuo): Promise<Residuo> {
