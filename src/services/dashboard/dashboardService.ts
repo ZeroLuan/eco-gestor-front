@@ -84,6 +84,15 @@ class DashboardService {
         }
     }
 
+    async getTotalCooperativasAtivas(): Promise<number> {
+        try {
+            return await apiClient.get<number>('/cooperativas/busca-total-cooperativas-ativas');
+        } catch (error) {
+            console.error('Erro ao buscar total de cooperativas ativas:', error);
+            throw error;
+        }
+    }
+
     async getAlertas(): Promise<Alerta[]> {
         try {
             return await apiClient.get<Alerta[]>('/dashboard/alertas');

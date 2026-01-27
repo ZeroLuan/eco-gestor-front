@@ -8,6 +8,7 @@ const Dashboard = () => {
     const [totalPesoMes, setTotalPesoMes] = useState<number | null>(null);
     const [totalPontosAtivos, setTotalPontosAtivos] = useState<number | null>(null);
     const [totalLicencasAtivas, setTotalLicencasAtivas] = useState<number | null>(null);
+    const [totalCooperativasAtivas, setTotalCooperativasAtivas] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -18,13 +19,14 @@ const Dashboard = () => {
         setLoading(true);
         try {
             console.log('📊 Carregando dados do dashboard...');
-            const [stats, activities, alerts, points, weight, licenses] = await Promise.all([
+            const [stats, activities, alerts, points, weight, licenses, cooperativas] = await Promise.all([
                 dashboardService.getStatistics().catch(err => { console.error(err); return null; }),
                 dashboardService.getAtividadesRecentes(4).catch(err => { console.error(err); return []; }),
                 dashboardService.getAlertas().catch(err => { console.error(err); return []; }),
                 dashboardService.getTotalPontosAtivos().catch(err => { console.error(err); return null; }),
                 dashboardService.getTotalPesoMes().catch(err => { console.error(err); return null; }),
-                dashboardService.getTotalLicencasAtivas().catch(err => { console.error(err); return null; })
+                dashboardService.getTotalLicencasAtivas().catch(err => { console.error(err); return null; }),
+                dashboardService.getTotalCooperativasAtivas().catch(err => { console.error(err); return null; })
             ]);
 
             if (stats) setStatistics(stats);
@@ -33,6 +35,7 @@ const Dashboard = () => {
             if (points !== null) setTotalPontosAtivos(points);
             if (weight !== null) setTotalPesoMes(weight);
             if (licenses !== null) setTotalLicencasAtivas(licenses);
+            if (cooperativas !== null) setTotalCooperativasAtivas(cooperativas);
         } catch (error) {
             console.error('Erro ao carregar dashboard', error);
         } finally {
@@ -121,15 +124,15 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Card 4: Denúncias Pendentes */}
+                {/* Card 4: Cooperativas Ativas */}
                 <div className="col-12 col-sm-6 col-lg-3">
                     <div className="card shadow-sm p-3 h-100">
-                        <h6 className="text-muted mb-3">Denúncias Pendentes</h6>
+                        <h6 className="text-muted mb-3">Cooperativas Ativas</h6>
                         <h3 className="fw-bold mb-2">
-                            {statistics?.denunciasPendentes?.valor ?? (loading ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : 0)}
+                            {totalCooperativasAtivas !== null ? totalCooperativasAtivas : (loading ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : 0)}
                         </h3>
-                        <p className="text-danger small mb-0">
-                            <i className="bi bi-exclamation-circle"></i> Aguardando análise
+                        <p className="text-success small mb-0">
+                            <i className="bi bi-people-fill"></i> Em operação
                         </p>
                     </div>
                 </div>

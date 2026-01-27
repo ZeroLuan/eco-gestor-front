@@ -1,9 +1,20 @@
+import { useNavigate } from 'react-router-dom';
+import authService from '../services/auth/authService';
+import { useTheme } from '../hooks/useTheme';
 
 interface HeaderProps {
     onToggleSidebar: () => void;
 }
 
 const Header = ({ onToggleSidebar }: HeaderProps) => {
+    const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
+
+    const handleLogout = () => {
+        authService.logout();
+        navigate('/login');
+    };
+
     return (
         <nav className="navbar-top">
             <div className="navbar">
@@ -27,6 +38,20 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
                         <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                             3
                         </span>
+                    </button>
+                    <button 
+                        className="btn btn-link" 
+                        onClick={toggleTheme}
+                        title={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
+                    >
+                        <i className={`bi bi-${theme === 'light' ? 'moon-stars' : 'sun'} fs-5`}></i>
+                    </button>
+                    <button 
+                        className="btn btn-link" 
+                        onClick={handleLogout}
+                        title="Sair"
+                    >
+                        <i className="bi bi-box-arrow-right fs-5"></i>
                     </button>
                 </div>
 

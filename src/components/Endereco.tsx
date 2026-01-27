@@ -91,7 +91,7 @@ const Endereco = forwardRef<EnderecoRef>((_, ref) => {
     };
 
     return (
-        <div className="endereco-component border rounded p-3 bg-white">
+        <div className="endereco-component border rounded p-3">
             <h6 className="mb-3">Endereço</h6>
 
             <div className="row">
