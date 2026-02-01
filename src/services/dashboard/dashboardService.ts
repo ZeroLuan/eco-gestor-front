@@ -110,6 +110,33 @@ class DashboardService {
             throw error;
         }
     }
+
+    async getResiduosPorTipo(): Promise<{ [key: string]: number }> {
+        try {
+            return await apiClient.get<{ [key: string]: number }>('/dashboard/residuos-por-tipo');
+        } catch (error) {
+            console.error('Erro ao buscar resíduos por tipo:', error);
+            return {};
+        }
+    }
+
+    async getResiduosUltimosMeses(): Promise<Array<{ mes: number; ano: number; peso: number }>> {
+        try {
+            return await apiClient.get<Array<{ mes: number; ano: number; peso: number }>>('/dashboard/residuos-ultimos-meses');
+        } catch (error) {
+            console.error('Erro ao buscar resíduos dos últimos meses:', error);
+            return [];
+        }
+    }
+
+    async getLicencasProximasVencer(): Promise<Array<any>> {
+        try {
+            return await apiClient.get<Array<any>>('/dashboard/licencas-proximas-vencer');
+        } catch (error) {
+            console.error('Erro ao buscar licenças próximas do vencimento:', error);
+            return [];
+        }
+    }
 }
 
 export const dashboardService = new DashboardService();

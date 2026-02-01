@@ -121,9 +121,12 @@ const ModalRegistraLicenca = ({ show, onClose, onSave, licencaData }: ModalRegis
         <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog">
                 <div className="modal-content">
-                    <div className="modal-header">
-                        <h5 className="modal-title">{licencaData ? 'Editar Licença' : 'Nova Licença'}</h5>
-                        <button type="button" className="btn-close" onClick={onClose}></button>
+                    <div className="modal-header bg-success text-white">
+                        <h5 className="modal-title">
+                            <i className="bi bi-file-earmark-text-fill me-2"></i>
+                            {licencaData ? 'Editar Licença' : 'Nova Licença'}
+                        </h5>
+                        <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
                     </div>
                     <form onSubmit={handleSubmit}>
                         <div className="modal-body">

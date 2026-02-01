@@ -50,6 +50,7 @@ axiosInstance.interceptors.response.use(
             }
             if (status === 403) return Promise.reject(new Error("Você não tem permissão para acessar este recurso."));
             if (status === 404) return Promise.reject(new Error("Recurso não encontrado."));
+            if (status === 409) return Promise.reject(new Error(message)); // Conflito (email duplicado, senhas não conferem, etc)
             if (status >= 500) return Promise.reject(new Error("Erro no servidor. Tente novamente mais tarde."));
 
             return Promise.reject(new Error(message));

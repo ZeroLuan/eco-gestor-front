@@ -19,10 +19,22 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação básica
+    if (!email.trim()) {
+      toast.error('Por favor, informe seu e-mail');
+      return;
+    }
+    
+    if (!password.trim()) {
+      toast.error('Por favor, informe sua senha');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      // Tentar fazer login com a API
+      // Fazer login com a API
       await authService.login({ email, password });
       
       if (rememberMe) {
@@ -34,17 +46,18 @@ export default function Login() {
     } catch (error: any) {
       console.error('Erro no login:', error);
       
-      // Se der erro, fazer um login de demonstração
-      // Remover isso quando a API estiver funcionando
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      localStorage.setItem('auth_token', 'demo-token');
+      // Mensagens de erro específicas
+      const errorMessage = error?.response?.data?.message 
+        || error?.message 
+        || 'Erro ao fazer login. Verifique suas credenciais.';
       
-      if (rememberMe) {
-        localStorage.setItem('remember_me', 'true');
+      if (errorMessage.includes('Usuário ou Senha Inválidos')) {
+        toast.error('E-mail ou senha incorretos');
+      } else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+        toast.error('E-mail ou senha incorretos');
+      } else {
+        toast.error(errorMessage);
       }
-      
-      toast.warning('Usando login de demonstração');
-      navigate("/dashboard");
     } finally {
       setIsLoading(false);
     }

@@ -673,6 +673,10 @@ a:hover {
     border-color: var(--border);
 }
 
+.table tbody td {
+    color: var(--foreground);
+}
+
 .table-striped tbody tr:nth-of-type(odd) {
     background-color: rgba(var(--primary-rgb), 0.03);
 }
@@ -704,6 +708,12 @@ a:hover {
 .modal-header.bg-success {
     background-color: var(--primary) !important;
     color: var(--primary-foreground) !important;
+}
+
+.modal-header.bg-success .modal-title,
+.modal-header.bg-success h5,
+.modal-header.bg-success i {
+    color: #ffffff !important;
 }
 
 .modal-header.bg-primary {

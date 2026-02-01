@@ -40,3 +40,17 @@ export const formatarTelefone = (valor: string): string => {
 export const formatarCNAE = (valor: string): string => {
     return apenasNumeros(valor).substring(0, 7);
 };
+
+export const formatarNaturezaJuridica = (valor: string): string => {
+    // Remove tudo que não é dígito
+    const apenasDigitos = valor.replace(/\D/g, '');
+
+    // Limita a 4 dígitos (XXX-X)
+    const truncado = apenasDigitos.substring(0, 4);
+
+    // Aplica a máscara: XXX-X
+    if (truncado.length <= 3) {
+        return truncado;
+    }
+    return truncado.replace(/^(\d{3})(\d)/, '$1-$2');
+};

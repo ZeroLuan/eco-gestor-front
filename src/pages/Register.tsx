@@ -5,6 +5,7 @@ import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
+import authService from "../services/auth/authService";
 import "./Login.css";
 
 export default function Register() {
@@ -50,16 +51,31 @@ export default function Register() {
     }
 
     try {
-      // TODO: Implementar chamada à API para registro
-      // await authService.register(formData);
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await authService.register({
+        nomeCompleto: formData.nome,
+        email: formData.email,
+        senha: formData.password,
+        confirmarSenha: formData.confirmPassword
+      });
       
       toast.success('Cadastro realizado com sucesso! Faça login para continuar.');
       navigate("/login");
     } catch (error: any) {
       console.error('Erro no cadastro:', error);
-      toast.error(error.response?.data?.message || 'Erro ao criar conta. Tente novamente.');
+      
+      // O interceptor já transforma os erros, então usamos error.message
+      const errorMessage = error.message || 'Erro ao criar conta. Tente novamente.';
+      
+      // Verificar mensagens específicas do backend
+      if (errorMessage.includes('email') && errorMessage.includes('existe')) {
+        toast.error('Este email já está cadastrado. Tente fazer login.');
+      } else if (errorMessage.includes('Senhas não conferem')) {
+        toast.error('As senhas não conferem.');
+      } else if (errorMessage.includes('servidor')) {
+        toast.error('Erro interno do servidor. Contate o administrador.');
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }

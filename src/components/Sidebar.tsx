@@ -1,4 +1,6 @@
 import { NavLink } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import usuarioService, { Usuario } from '../services/usuario/usuarioService';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -6,6 +8,24 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+    const [usuario, setUsuario] = useState<Usuario | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const carregarUsuarioLogado = async () => {
+            try {
+                const usuarioLogado = await usuarioService.buscarUsuarioLogado();
+                setUsuario(usuarioLogado);
+            } catch (error) {
+                console.error('Erro ao carregar dados do usuário:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        carregarUsuarioLogado();
+    }, []);
+
     return (
         <>
             <aside className={`sidebar ${isOpen ? 'show' : ''}`} id="sidebar">
@@ -101,8 +121,22 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                         <div className="user-card">
                             <i className="bi bi-person-circle fs-3 text-primary"></i>
                             <div className="user-info">
-                                <p className="mb-0 fw-bold small">Gestor Ambiental</p>
-                                <p className="mb-0 text-muted" style={{ fontSize: '0.75rem' }}>gestor@irece.ba.gov.br</p>
+                                {loading ? (
+                                    <>
+                                        <p className="mb-0 fw-bold small">Carregando...</p>
+                                        <p className="mb-0 text-muted" style={{ fontSize: '0.75rem' }}>...</p>
+                                    </>
+                                ) : usuario ? (
+                                    <>
+                                        <p className="mb-0 fw-bold small">{usuario.nomeCompleto}</p>
+                                        <p className="mb-0 text-muted" style={{ fontSize: '0.75rem' }}>{usuario.email}</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="mb-0 fw-bold small">Erro ao carregar</p>
+                                        <p className="mb-0 text-muted" style={{ fontSize: '0.75rem' }}>Tente novamente</p>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>

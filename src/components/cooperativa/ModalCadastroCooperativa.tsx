@@ -3,7 +3,7 @@ import Endereco, { EnderecoRef } from '../Endereco';
 import { cooperativaService, Cooperativa } from '../../services/cooperativa/cooperativaService';
 import { enderecoService } from '../../services/endereco/enderecoService';
 import { toast } from 'react-toastify';
-import { formatarCNPJ, formatarTelefone, formatarCNAE } from '../../utils/formatters';
+import { formatarCNPJ, formatarTelefone, formatarCNAE, formatarNaturezaJuridica } from '../../utils/formatters';
 
 interface ModalCadastroCooperativaProps {
     show: boolean;
@@ -223,8 +223,8 @@ const ModalCadastroCooperativa = ({ show, onClose, onSave, cooperativaData }: Mo
                                         type="text"
                                         className="form-control"
                                         value={naturezaJuridica}
-                                        onChange={e => setNaturezaJuridica(e.target.value)}
-                                        placeholder="Ex: Ltda, S.A., etc."
+                                        onChange={e => setNaturezaJuridica(formatarNaturezaJuridica(e.target.value))}
+                                        placeholder="000-0"
                                     />
                                 </div>
 

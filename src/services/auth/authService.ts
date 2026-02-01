@@ -6,18 +6,15 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  token: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  accessToken: string;
+  expiresIn: number;
 }
 
 export interface RegisterData {
-  nome: string;
+  nomeCompleto: string;
   email: string;
-  password: string;
+  senha: string;
+  confirmarSenha: string;
 }
 
 export interface ForgotPasswordData {
@@ -27,26 +24,79 @@ export interface ForgotPasswordData {
 class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'auth_user';
+  private readonly EXPIRES_KEY = 'token_expires';
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
+      // Endpoint correto conforme o backend: /token/login
+      // O backend espera "senha" em vez de "password"
+      const payload = {
+        email: credentials.email,
+        senha: credentials.password
+      };
       
-      if (response.token) {
-        this.setToken(response.token);
-        this.setUser(response.user);
+      console.log('🔑 Tentando fazer login com:', { email: payload.email });
+      
+      const response = await apiClient.post<AuthResponse>('/token/login', payload);
+      
+      console.log('📦 Resposta do servidor:', response);
+      
+      if (response.accessToken) {
+        this.setToken(response.accessToken);
+        
+        // Calcular e armazenar quando o token expira
+        const expiresAt = Date.now() + (response.expiresIn * 1000);
+        localStorage.setItem(this.EXPIRES_KEY, expiresAt.toString());
+        
+        // Decodificar o token para obter informações do usuário
+        const userInfo = this.decodeToken(response.accessToken);
+        if (userInfo) {
+          this.setUser(userInfo);
+          console.log('👤 Informações do usuário:', userInfo);
+        }
+        
+        console.log('✅ Login realizado com sucesso!');
+      } else {
+        console.error('❌ Resposta não contém accessToken:', response);
       }
       
       return response;
     } catch (error) {
+      console.error('❌ Erro no login:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Decodifica o JWT para extrair informações do usuário
+   * (simples decode - não valida assinatura, apenas lê o payload)
+   */
+  private decodeToken(token: string): any {
+    try {
+      const payload = token.split('.')[1];
+      const decoded = atob(payload);
+      return JSON.parse(decoded);
+    } catch (error) {
+      console.error('Erro ao decodificar token:', error);
+      return null;
     }
   }
 
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
+    localStorage.removeItem(this.EXPIRES_KEY);
     localStorage.removeItem('remember_me');
+  }
+
+  /**
+   * Verifica se o token está expirado
+   */
+  isTokenExpired(): boolean {
+    const expiresAt = localStorage.getItem(this.EXPIRES_KEY);
+    if (!expiresAt) return true;
+    
+    return Date.now() >= parseInt(expiresAt);
   }
 
   setToken(token: string): void {
@@ -67,7 +117,16 @@ class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+    
+    // Verifica se o token expirou
+    if (this.isTokenExpired()) {
+      this.logout();
+      return false;
+    }
+    
+    return true;
   }
 
   async verifyToken(): Promise<boolean> {
@@ -84,10 +143,9 @@ class AuthService {
     }
   }
 
-  async register(data: RegisterData): Promise<AuthResponse> {
+  async register(data: RegisterData): Promise<void> {
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/register', data);
-      return response;
+      await apiClient.post('/usuario/criar', data);
     } catch (error) {
       throw error;
     }

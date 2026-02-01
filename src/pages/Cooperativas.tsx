@@ -123,7 +123,7 @@ const Cooperativas = () => {
             <div className="card shadow-sm mb-4">
                 <div className="card-body">
                     <div className="row gy-3">
-                        <div className="col-md-4">
+                        <div className="col-md-3">
                             <label className="form-label small">Nome</label>
                             <input
                                 type="text"
@@ -133,7 +133,7 @@ const Cooperativas = () => {
                                 onChange={e => setFiltroNome(e.target.value)}
                             />
                         </div>
-                        <div className="col-md-4">
+                        <div className="col-md-3">
                             <label className="form-label small">CNPJ</label>
                             <input
                                 type="text"

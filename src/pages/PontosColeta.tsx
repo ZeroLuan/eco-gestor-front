@@ -74,8 +74,6 @@ const PontosColeta = () => {
         setFiltroEndereco('');
         setPage(0);
 
-        // Need to run load immediately after clearing state, usually better via effect or direct call with cleared params
-        // I'll force call
         setLoading(true);
         pontosColetaService.listarTodos({ page: 0, size: 10, sort: 'id,desc' })
             .then(response => {
