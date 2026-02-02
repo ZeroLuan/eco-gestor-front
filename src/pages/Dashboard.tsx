@@ -79,7 +79,8 @@ const Dashboard = () => {
             'licenca': 'bi-check-circle-fill text-success',
             'ponto': 'bi-geo-alt-fill text-primary',
             'denuncia': 'bi-exclamation-triangle-fill text-warning',
-            'coleta': 'bi-recycle text-info'
+            'coleta': 'bi-recycle text-info',
+            'cooperativa': 'bi-people-fill text-purple'
         };
         return icones[tipo] || 'bi-info-circle text-secondary';
     };
@@ -322,21 +323,67 @@ const Dashboard = () => {
             <div className="row g-3 mt-3">
                 <div className="col-12 col-lg-8">
                     <div className="card shadow-sm p-4">
-                        <h5 className="fw-bold mb-3">Atividades Recentes</h5>
-                        <ul className="list-group list-group-flush">
-                            {atividades.map((atividade, index) => (
-                                <li key={index} className="list-group-item d-flex align-items-center">
-                                    <i className={`bi ${getIconeAtividade(atividade.tipo)} me-3`}></i>
-                                    <div>
-                                        <p className="mb-0 fw-semibold">{atividade.titulo}</p>
-                                        <small className="text-muted">{atividade.descricao} - {formatarTempo(atividade.data)}</small>
-                                    </div>
-                                </li>
-                            ))}
-                            {atividades.length === 0 && !loading && (
-                                <li className="list-group-item text-muted">Nenhuma atividade recente.</li>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h5 className="fw-bold mb-0">
+                                <i className="bi bi-clock-history me-2 text-primary"></i>
+                                Atividades Recentes
+                            </h5>
+                            {atividades.length > 0 && (
+                                <span className="badge bg-primary rounded-pill">
+                                    {atividades.length}
+                                </span>
                             )}
-                        </ul>
+                        </div>
+                        
+                        {loading ? (
+                            <div className="text-center py-5">
+                                <div className="spinner-border text-primary" role="status">
+                                    <span className="visually-hidden">Carregando...</span>
+                                </div>
+                            </div>
+                        ) : atividades.length === 0 ? (
+                            <div className="text-center py-5">
+                                <i className="bi bi-inbox text-muted" style={{ fontSize: '3rem' }}></i>
+                                <p className="text-muted mt-3 mb-0">Nenhuma atividade registrada ainda.</p>
+                                <small className="text-muted">As ações realizadas aparecerão aqui.</small>
+                            </div>
+                        ) : (
+                            <div className="list-group list-group-flush">
+                                {atividades.map((atividade, index) => (
+                                    <div key={index} className="list-group-item border-0 px-0 py-3">
+                                        <div className="d-flex align-items-start">
+                                            <div className="flex-shrink-0 me-3">
+                                                <div 
+                                                    className="rounded-circle d-flex align-items-center justify-content-center"
+                                                    style={{
+                                                        width: '40px',
+                                                        height: '40px',
+                                                        backgroundColor: '#e7f3ff'
+                                                    }}
+                                                >
+                                                    <i className={`bi ${getIconeAtividade(atividade.categoria || atividade.tipo)} fs-5`}></i>
+                                                </div>
+                                            </div>
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex justify-content-between align-items-start mb-1">
+                                                    <h6 className="mb-0 fw-semibold">{atividade.titulo}</h6>
+                                                    <small className="text-muted ms-2" style={{ whiteSpace: 'nowrap' }}>
+                                                        {formatarTempo(atividade.data)}
+                                                    </small>
+                                                </div>
+                                                <p className="mb-1 text-muted small">{atividade.descricao}</p>
+                                                {atividade.usuarioEmail && (
+                                                    <div className="d-flex align-items-center mt-2">
+                                                        <i className="bi bi-person-badge text-muted me-1" style={{ fontSize: '0.85rem' }}></i>
+                                                        <small className="text-muted">{atividade.usuarioEmail}</small>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -1019,6 +1019,15 @@ small, .small {
     filter: invert(1) grayscale(100%) brightness(200%);
 }
 
+/* Estilo para cor purple */
+.text-purple {
+    color: #8b5cf6 !important;
+}
+
+.bg-purple {
+    background-color: #8b5cf6 !important;
+}
+
 
 
 

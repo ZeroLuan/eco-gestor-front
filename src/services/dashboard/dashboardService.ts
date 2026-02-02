@@ -17,9 +17,15 @@ export interface DashboardStatistics {
 }
 
 export interface AtividadeRecente {
-    tipo: 'licenca' | 'ponto' | 'denuncia' | 'coleta' | string;
+    id?: number;
+    tipo: 'licenca' | 'ponto' | 'denuncia' | 'coleta' | 'cooperativa' | string;
+    tipoLabel?: string;
+    categoria?: string;
     titulo: string;
     descricao: string;
+    usuarioEmail?: string;
+    entidadeId?: number;
+    entidadeTipo?: string;
     data: string; // ISO date string
 }
 
